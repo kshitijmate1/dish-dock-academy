@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DISH Dock Academy - LPN Receiving Quiz</title>
+<style>
+  :root{
+    --bg:#0f1b2d; --panel:#16263f; --panel2:#1d3252; --ink:#f3f6fb; --muted:#9fb0c8;
+    --amber:#ffb627; --green:#2ec27e; --red:#ff5c5c; --blue:#4ea8ff; --purple:#a78bfa;
+    --crit:#ff7a45; --nec:#4ea8ff; --basic:#2ec27e;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:
+    repeating-linear-gradient(90deg,rgba(255,255,255,.02) 0 2px,transparent 2px 80px),
+    linear-gradient(180deg,#0f1b2d 0%,#12233b 100%);color:var(--ink);min-height:100vh}
+  header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:#0b1424;border-bottom:4px solid var(--amber);
+    background-image:repeating-linear-gradient(-45deg,#0b1424 0 18px,#111d33 18px 36px)}
+  header h1{font-size:20px;margin:0;letter-spacing:.5px}
+  header h1 span{color:var(--amber)}
+  .hud{display:flex;gap:10px;flex-wrap:wrap}
+  .chip{background:var(--panel2);border-radius:999px;padding:6px 12px;font-size:14px;font-weight:600;white-space:nowrap}
+  main{max-width:860px;margin:0 auto;padding:20px}
+  .screen{display:none}
+  .screen.active{display:block}
+  .panel{background:var(--panel);border-radius:18px;padding:24px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+  h2{margin-top:0}
+  .muted{color:var(--muted)}
+  .btn{border:0;border-radius:14px;padding:14px 20px;font-size:17px;font-weight:700;cursor:pointer;color:#0b1424;background:var(--amber);transition:transform .08s,filter .15s}
+  .btn:hover{filter:brightness(1.08)} .btn:active{transform:scale(.97)}
+  .btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--panel2)}
+  .btn.blue{background:var(--blue)}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  input[type=text]{width:100%;padding:14px;border-radius:12px;border:2px solid var(--panel2);background:#0f1b2d;color:var(--ink);font-size:17px}
+  .rules{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}
+  .rule{background:var(--panel2);border-radius:14px;padding:14px;text-align:center}
+  .rule b{display:block;font-size:26px}
+  .tier{display:inline-block;font-size:12px;font-weight:800;letter-spacing:1px;padding:4px 10px;border-radius:999px;color:#0b1424}
+  .tier.critical{background:var(--crit)} .tier.necessary{background:var(--nec)} .tier.basic{background:var(--basic)}
+  .topic{font-size:12px;color:var(--muted);margin-left:8px;text-transform:uppercase;letter-spacing:1px}
+
+  /* truck progress */
+  .truck{position:relative;height:56px;margin:4px 0 18px;background:var(--panel);border-radius:12px;overflow:hidden}
+  .truck .road{position:absolute;left:0;right:0;bottom:8px;height:4px;background:repeating-linear-gradient(90deg,#3b4f70 0 20px,transparent 20px 34px)}
+  .truck .fill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,rgba(255,182,39,.18),rgba(255,182,39,.35));transition:width .4s}
+  .truck .rig{position:absolute;top:6px;font-size:34px;transition:left .4s;transform:scaleX(-1)}
+  .truck .dock{position:absolute;right:10px;top:12px;font-size:13px;font-weight:700;color:var(--amber)}
+
+  /* flashcard */
+  .scene{perspective:1200px;margin:6px 0 18px}
+  .card{position:relative;width:100%;min-height:290px;transform-style:preserve-3d;transition:transform .55s}
+  .card.flipped{transform:rotateY(180deg)}
+  .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:20px;padding:26px;display:flex;flex-direction:column;justify-content:center;
+    background:linear-gradient(160deg,#c8945a 0%,#b07a43 100%);color:#2a1b0c;box-shadow:inset 0 0 0 6px rgba(0,0,0,.08),0 12px 26px rgba(0,0,0,.4)}
+  .face:before{content:"";position:absolute;left:0;right:0;top:46%;height:34px;background:rgba(255,255,255,.18)}
+  .face .label{position:absolute;top:16px;right:18px;background:#fff;border:2px dashed #2a1b0c;border-radius:6px;padding:4px 8px;font-family:monospace;font-size:12px;font-weight:700}
+  .face .q{font-size:24px;font-weight:800;line-height:1.3;position:relative}
+  .face.back{transform:rotateY(180deg);background:linear-gradient(160deg,#20344f,#1a2b44);color:var(--ink)}
+  .face.back:before{display:none}
+  .verdict{font-size:30px;font-weight:900;margin-bottom:8px}
+  .verdict.ok{color:var(--green)} .verdict.no{color:var(--red)}
+  .why{font-size:18px;line-height:1.5}
+  .answer{font-weight:800;color:var(--amber)}
+  .choices{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .choice{font-size:22px;padding:22px;border-radius:16px}
+  .choice.right{background:var(--green)} .choice.wrong{background:var(--red);color:#fff}
+  .hint{font-size:13px;color:var(--muted);text-align:center;margin-top:10px}
+
+  .bar{height:12px;border-radius:99px;background:var(--panel2);overflow:hidden}
+  .bar > i{display:block;height:100%}
+  .big{font-size:56px;font-weight:900;margin:6px 0}
+  .pass{color:var(--green)} .fail{color:var(--red)}
+  table{width:100%;border-collapse:collapse;margin:10px 0}
+  td,th{padding:10px;border-bottom:1px solid var(--panel2);text-align:left;font-size:15px}
+  .miss{background:var(--panel2);border-radius:12px;padding:12px 14px;margin:10px 0}
+  .miss b{color:var(--amber)}
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .filters button{border:2px solid var(--panel2);background:transparent;color:var(--ink);border-radius:999px;padding:6px 14px;font-weight:700;cursor:pointer}
+  .filters button.on{background:var(--amber);color:#0b1424;border-color:var(--amber)}
+  .cert{display:none}
+  #confetti{position:fixed;inset:0;pointer-events:none;z-index:50}
+  footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
+  @media (max-width:640px){ .rules{grid-template-columns:1fr} .face .q{font-size:20px} .choices{grid-template-columns:1fr 1fr} header h1{font-size:16px} }
+  @media print{
+    body{background:#fff;color:#000} header,main,footer,#confetti{display:none!important}
+    .cert{display:block!important;text-align:center;padding:60px;border:12px double #b07a43;margin:30px;font-family:Georgia,serif}
+    .cert h1{font-size:40px;margin:0 0 10px} .cert .nm{font-size:34px;font-weight:bold;margin:20px 0;border-bottom:2px solid #000;display:inline-block;padding:0 30px}
+  }
+</style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+<header>
+  <h1>🚚 DISH <span>Dock Academy</span> · LPN Edition</h1>
+  <div class="hud" id="hud" style="display:none">
+    <div class="chip" id="hudQ">📦 1/50</div>
+    <div class="chip" id="hudScore">⭐ 0 pts</div>
+    <div class="chip" id="hudStreak">🔥 0</div>
+  </div>
+</header>
+
+<main>
+  <!-- START -->
+  <section class="screen active" id="start">
+    <div class="panel">
+      <h2>Welcome to the dock 👷</h2>
+      <p>Mobile Receiving + LPNs are coming to DISH. This is a quick, no-stress run through how receiving with LPNs works and what it changes downstream - putaway, replen, picking and cycle counts.</p>
+      <p>Every card is a statement. Tap <b>✅ Right</b> or <b>❌ Wrong</b>. After each answer the card flips and tells you why.</p>
+      <div class="rules">
+        <div class="rule"><span class="tier critical">CRITICAL</span><b>20 × 2</b><span class="muted">Get these right on the floor</span></div>
+        <div class="rule"><span class="tier necessary">NECESSARY</span><b>20 × 1</b><span class="muted">How the flows fit together</span></div>
+        <div class="rule"><span class="tier basic">BASIC</span><b>10 × 1</b><span class="muted">LPN 101</span></div>
+      </div>
+      <p><b>70 points total. You need 47 to pass</b> (two-thirds - same bar as 40 out of 60). Questions shuffle every run.</p>
+      <label class="muted" for="name">Your name (goes on your certificate)</label>
+      <input type="text" id="name" placeholder="e.g. Jordan - 2nd shift receiving" maxlength="60">
+      <div class="row" style="margin-top:16px">
+        <button class="btn" id="goQuiz">🚛 Start the shift (quiz)</button>
+        <button class="btn ghost" id="goStudy">🗂️ Study flashcards first</button>
+      </div>
+      <p class="muted" id="best" style="margin-top:14px"></p>
+    </div>
+  </section>
+
+  <!-- STUDY -->
+  <section class="screen" id="study">
+    <div class="panel">
+      <h2>🗂️ Flashcards</h2>
+      <p class="muted">Tap the box to flip it. No points here - just learning.</p>
+      <div class="filters" id="filters"></div>
+      <div class="scene"><div class="card" id="sCard">
+        <div class="face front"><div class="label" id="sLabel">LPN-BO1</div><div><span class="tier" id="sTier"></span><span class="topic" id="sTopic"></span></div><div class="q" id="sQ" style="margin-top:14px"></div></div>
+        <div class="face back"><div class="verdict" id="sAns"></div><div class="why" id="sWhy"></div></div>
+      </div></div>
+      <div class="row" style="justify-content:space-between">
+        <button class="btn ghost" id="sPrev">◀ Prev</button>
+        <span class="chip" id="sCount"></span>
+        <button class="btn ghost" id="sNext">Next ▶</button>
+      </div>
+      <div class="row" style="margin-top:16px">
+        <button class="btn" id="studyToQuiz">🚛 I'm ready - start the quiz</button>
+        <button class="btn ghost" id="studyHome">Home</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ -->
+  <section class="screen" id="quiz">
+    <div class="truck"><div class="fill" id="fill"></div><div class="road"></div><div class="rig" id="rig">🚚</div><div class="dock">DOCK 🏁</div></div>
+    <div class="scene"><div class="card" id="qCard">
+      <div class="face front"><div class="label" id="qLabel"></div><div><span class="tier" id="qTier"></span><span class="topic" id="qTopic"></span></div><div class="q" id="qText" style="margin-top:14px"></div></div>
+      <div class="face back"><div class="verdict" id="qVerdict"></div><div class="why"><span class="answer" id="qAnswer"></span> <span id="qWhy"></span></div></div>
+    </div></div>
+    <div class="choices" id="choices">
+      <button class="btn choice right" id="bRight">✅ Right</button>
+      <button class="btn choice wrong" id="bWrong">❌ Wrong</button>
+    </div>
+    <div class="row" id="nextRow" style="display:none;justify-content:center">
+      <button class="btn blue" id="bNext" style="min-width:240px">Next pallet ▶</button>
+    </div>
+    <p class="hint">Keyboard: R = Right · W = Wrong · Enter = Next</p>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="screen" id="results">
+    <div class="panel">
+      <h2 id="rTitle"></h2>
+      <div class="big" id="rScore"></div>
+      <div class="bar"><i id="rBar"></i></div>
+      <p id="rMsg" style="font-size:18px"></p>
+      <table>
+        <thead><tr><th>Tier</th><th>Correct</th><th>Points</th></tr></thead>
+        <tbody id="rTable"></tbody>
+      </table>
+      <div class="row" style="margin:14px 0">
+        <button class="btn" id="rRetry">🔁 Run the shift again</button>
+        <button class="btn ghost" id="rStudyMiss">🗂️ Study what I missed</button>
+        <button class="btn ghost" id="rCert" style="display:none">🖨️ Print certificate</button>
+      </div>
+      <h3 id="rMissTitle">Cards to review</h3>
+      <div id="rMiss"></div>
+    </div>
+  </section>
+</main>
+
+<div class="cert" id="cert">
+  <div style="font-size:60px">🚚📦</div>
+  <h1>DISH Dock Academy</h1>
+  <div>This certifies that</div>
+  <div class="nm" id="cName"></div>
+  <div>passed <b>Mobile Receiving + LPNs</b> with a score of <b id="cScore"></b></div>
+  <p id="cDate"></p>
+  <p style="margin-top:40px">Lead / Supervisor sign-off: ____________________________</p>
+</div>
+
+<footer>DISH Dock Academy · ShipHero Mobile Receiving + LPNs · Training aid only - your lead and the DISH SOP have the final word.</footer>
+
+<script>
+const PASS = 47;
+const PTS = {critical:2, necessary:1, basic:1};
+// a: true = the statement is RIGHT, false = WRONG
+const Q = [
+  // ---------- CRITICAL (2 pts) ----------
+  {t:"critical", k:"Labels", q:"You need LPN labels printed and in hand before you start receiving a truck.", a:true, w:"Printing LPNs is step one of receiving. No LPN, no receipt."},
+  {t:"critical", k:"Labels", q:"LPN labels can be printed straight from the receiving screen on the iPad.", a:false, w:"LPN labels are created and printed from the ShipHero web app (Inventory & Locations → LPNs → Create LPN). Leads pre-print them before the shift."},
+  {t:"critical", k:"Receiving", q:"Stock is actually received the moment you scan the LPN.", a:true, w:"Scanning the LPN is what puts the stock on the LPN and updates the PO."},
+  {t:"critical", k:"Receiving", q:"Scanning the dock door location receives everything on the truck.", a:false, w:"The dock door scan only marks the inbound as Arrived and sets where stock lands. Nothing is received until you scan an LPN."},
+  {t:"critical", k:"House rules", q:"It's fine to put two different SKUs on the same LPN.", a:false, w:"One SKU per LPN. A mixed LPN can't be moved into a pickable location until it's broken out."},
+  {t:"critical", k:"House rules", q:"Same SKU, two lots on one pallet: each lot goes on its own box LPN, nested on the pallet LPN.", a:true, w:"One lot per LPN keeps every lot traceable, and FEFO replen can grab the right box."},
+  {t:"critical", k:"Labels", q:"You can peel the LPN off a pallet that's already been received and reuse it on a new pallet.", a:false, w:"Never reuse an LPN. Our LPNs are single-use, and reusing one links new stock to old history."},
+  {t:"critical", k:"Cases vs eaches", q:"On day 1, case SKUs get received as cases, not broken down into eaches.", a:true, w:"Receive cases as cases. Breaking down during receiving currently logs against the each SKU. Break down later at putaway or replen."},
+  {t:"critical", k:"Cases vs eaches", q:"Tapping 'Switch count to eaches' while receiving is how we break down cases on day 1.", a:false, w:"Don't break down during receiving on day 1. Check the UOM on the card says Case, receive as cases, break down after."},
+  {t:"critical", k:"Receiving", q:"The over-receive warning pops up: stop and get your lead before you confirm.", a:true, w:"ShipHero will let it through if you confirm, so the lead checks it first."},
+  {t:"critical", k:"Corrections", q:"Keyed the wrong SKU onto an LPN? Just set its quantity to 0.", a:false, w:"Don't zero it out - it stays stuck to the LPN and blocks moves. Leave 1 and fix it with a mobile adjustment after."},
+  {t:"critical", k:"Moves", q:"Moving a pallet with the forklift without doing a system move is OK as long as you tell someone.", a:false, w:"If ShipHero doesn't know it moved, picks, replen and counts all go to the wrong spot. Always do the system move (Transfer Entire Location or Putaway)."},
+  {t:"critical", k:"Picking", q:"In MIB picking, if the lot you're sent to is on an LPN, you have to scan the location AND the LPN.", a:true, w:"Location + LPN are required scans. The product can be scanned or tapped."},
+  {t:"critical", k:"Picking", q:"The LPN you're told to pick from isn't there - grab the same item from the next location over.", a:false, w:"Don't work around it. Mark the location hospital, and a supervisor reprints the label or fixes the LPN."},
+  {t:"critical", k:"Cycle count", q:"During a cycle count, if there's an LPN in the location, scan the LPN and count what's inside it.", a:true, w:"LPN locations are counted, not skipped. LPN first, then its contents, then Finish LPN count."},
+  {t:"critical", k:"Cycle count", q:"If you hit 'Save progress' halfway through counting an LPN, your partial count is kept.", a:false, w:"Save progress doesn't keep a half-counted LPN - it shows up as a discrepancy. Finish the LPN first."},
+  {t:"critical", k:"Receiving", q:"Rejected product (damaged, out of temp) goes onto a dedicated reject LPN.", a:true, w:"Qty + reason + photo, then scan the reject LPN. Rejected stock doesn't count as available."},
+  {t:"critical", k:"Corrections", q:"To unreceive something, use the PO page in the web app.", a:false, w:"Unreceive on mobile (Received Summary → Edit → scan the LPN). The web PO page doesn't know which LPN holds the stock."},
+  {t:"critical", k:"Receiving", q:"Every receipt needs an inbound shipment first.", a:true, w:"No inbound, no receiving. The office creates it on web, or you can create one on the iPad for an unscheduled truck."},
+  {t:"critical", k:"House rules", q:"Scan barcodes - don't tap items from the list.", a:true, w:"Scanning is what checks you've got the right item, lot and LPN."},
+
+  // ---------- NECESSARY (1 pt) ----------
+  {t:"necessary", k:"Receiving", q:"Duplicate copies the SKU, qty and lot from one pallet onto a new LPN for identical pallets.", a:true, w:"Received Summary → Duplicate → scan each new LPN → Finish duplicating."},
+  {t:"necessary", k:"Receiving", q:"Duplicate is the quick way to receive a partial last pallet.", a:false, w:"Only duplicate what's truly identical. A partial pallet or a different lot goes through the normal flow."},
+  {t:"necessary", k:"Nesting", q:"After scanning box LPNs, scan the pallet LPN to nest them and clear your queue before starting the next pallet.", a:true, w:"Your Loose Cartons queue is per user. Scan the pallet to nest them before you move on."},
+  {t:"necessary", k:"Nesting", q:"Box LPNs nest onto pallets, and a pallet LPN can also be nested inside another pallet.", a:false, w:"Max two levels: box → pallet. A pallet is always the top level."},
+  {t:"necessary", k:"Putaway", q:"In Putaway, scanning a pallet LPN moves everything on it - including nested boxes.", a:true, w:"One scan moves the whole container. That's the point of LPNs."},
+  {t:"necessary", k:"Putaway", q:"Pallets going into freezer overstock get broken out into loose cases at putaway.", a:false, w:"Overstock and reserve pallet positions move as a Full LPN - don't unnest."},
+  {t:"necessary", k:"Flow racks", q:"Taking 5 of 40 cases to a flow rack means printing a new LPN for the 35 left on the pallet.", a:false, w:"Use Some Items / Break out. The 5 go loose into the flow rack, and the 35 stay on the original LPN with its sticker."},
+  {t:"necessary", k:"Flow racks", q:"Gravity flow racks hold loose stock, not LPNs.", a:true, w:"Flow rack stock gets broken out to loose at putaway or replen."},
+  {t:"necessary", k:"Replen", q:"In replen, follow the suggested source LPN - it's picked by FEFO.", a:true, w:"Scanning a different LPN gives a wrong-barcode error. The suggestion is the oldest expiry."},
+  {t:"necessary", k:"Replen", q:"With LPNs, min/max moves off pick locations and onto LPNs.", a:false, w:"Min/max stays on pick locations, same as today."},
+  {t:"necessary", k:"Lookups", q:"The LPN Viewer shows what's on an LPN, where it is and a timeline of every move.", a:true, w:"Inventory → LPN Viewer → scan it. Also shows the parent pallet and lots."},
+  {t:"necessary", k:"Picking", q:"When a location has both loose stock and LPN stock, ShipHero sends you to the loose stock first.", a:true, w:"Loose first, then LPN. If several LPNs qualify, the SUGGESTED one has the most units."},
+  {t:"necessary", k:"Go-live", q:"All existing inventory has to be relabeled with LPNs before launch.", a:false, w:"Old non-LPN stock stays loose and picks / counts like today. It cycles out naturally."},
+  {t:"necessary", k:"Receiving", q:"Short delivery? Receive what showed up - the PO stays open for the rest on a new inbound.", a:true, w:"PO auto-close is off, so partially received POs stay open."},
+  {t:"necessary", k:"Receiving", q:"Several receivers can work the same inbound at the same time.", a:true, w:"My Work shows yours, All Inbound shows everyone's. The lead finalizes once everyone's done."},
+  {t:"necessary", k:"Cycle count", q:"The LPN that should be in the location isn't there? Tap 'Mark as not found'.", a:true, w:"On close it moves to the missing-LPN location and can't be allocated until it's found."},
+  {t:"necessary", k:"Cycle count", q:"Starting a cycle count makes those locations non-pickable, so counts get created right before they're done.", a:true, w:"An unfinished count leaves locations locked. Create it close to when you'll count."},
+  {t:"necessary", k:"Receiving", q:"CK1 GS1 / QR labels fill in the lot and expiry for you when scanned.", a:true, w:"GS1 barcodes auto-fill lot + expiry."},
+  {t:"necessary", k:"Receiving", q:"3P vendor items without a GS1 barcode also fill in the lot automatically.", a:false, w:"No GS1 = enter lot # and expiry manually (or pick an existing lot)."},
+  {t:"necessary", k:"Labels", q:"Best spot for a pallet LPN: on a case that'll be pulled off first.", a:false, w:"Put it on the wrap or base - ideally two copies, one outside the stretch wrap and one under it on the bottom layer."},
+
+  // ---------- BASIC (1 pt) ----------
+  {t:"basic", k:"LPN 101", q:"LPN stands for License Plate Number.", a:true, w:"Like a license plate for a pallet or box."},
+  {t:"basic", k:"LPN 101", q:"An LPN is the barcode for a location in the warehouse.", a:false, w:"An LPN is for a container (pallet or box). Locations have their own barcodes."},
+  {t:"basic", k:"LPN 101", q:"LPN-PA… is a pallet LPN and LPN-BO… is a box LPN.", a:true, w:"ShipHero names them automatically, e.g. LPN-PA15 and LPN-BO15."},
+  {t:"basic", k:"LPN 101", q:"'Box LPN' is ShipHero's name for what we call a case LPN.", a:true, w:"Same thing, different word."},
+  {t:"basic", k:"LPN 101", q:"Unused LPNs can be deleted, but In-Use ones can't.", a:true, w:"Statuses go Unused → In-Use → Used. Only Unused can be deleted."},
+  {t:"basic", k:"Equipment", q:"Mobile receiving runs on the iPad on the receiving cart.", a:true, w:"iPads in cases on the carts, with wifi label printers."},
+  {t:"basic", k:"Equipment", q:"The label printers connect to the iPads over Bluetooth.", a:false, w:"Wifi. Bluetooth didn't work reliably on iOS."},
+  {t:"basic", k:"Receiving", q:"Each dock door has its own location barcode, like Dock_Door_1.", a:true, w:"Scan it first when you start receiving at that door."},
+  {t:"basic", k:"LPN 101", q:"An emptied single-use LPN goes back into the pile for the next pallet.", a:false, w:"Single-use LPNs go to Used once empty and are never reused."},
+  {t:"basic", k:"Picking", q:"Stock on LPNs is still picked first-expired, first-out (FEFO).", a:true, w:"LPNs don't change FEFO - they just add the LPN scan."}
+];
+
+// ---------- state ----------
+const $ = id => document.getElementById(id);
+let deck=[], i=0, score=0, streak=0, answered=false, results=[];
+const show = id => { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); $(id).classList.add('active'); $('hud').style.display = id==='quiz' ? 'flex':'none'; window.scrollTo(0,0); };
+const shuffle = a => { a=a.slice(); for(let j=a.length-1;j>0;j--){const r=Math.floor(Math.random()*(j+1));[a[j],a[r]]=[a[r],a[j]];} return a; };
+const tierLabel = t => t==='critical' ? 'CRITICAL · 2 PTS' : t==='necessary' ? 'NECESSARY · 1 PT' : 'BASIC · 1 PT';
+const lpn = n => (n%3===0?'LPN-PA':'LPN-BO') + (100+n);
+
+const store={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+const best = store.get('dishLpnBest');
+if(best) $('best').textContent = `🏆 Your best on this device: ${best} / 70`;
+
+// ---------- quiz ----------
+function startQuiz(){
+  deck = shuffle(Q); i=0; score=0; streak=0; results=[];
+  show('quiz'); render();
+}
+function render(){
+  const c = deck[i]; answered=false;
+  $('qCard').classList.remove('flipped');
+  $('qTier').className = 'tier '+c.t; $('qTier').textContent = tierLabel(c.t);
+  $('qTopic').textContent = c.k; $('qText').textContent = c.q; $('qLabel').textContent = lpn(i+1);
+  $('choices').style.display='grid'; $('nextRow').style.display='none';
+  $('hudQ').textContent = `📦 ${i+1}/${deck.length}`; $('hudScore').textContent = `⭐ ${score} pts`; $('hudStreak').textContent = `🔥 ${streak}`;
+  const pct = i/deck.length*100; $('fill').style.width = pct+'%'; $('rig').style.left = `calc(${pct*0.85}% + 6px)`;
+}
+function answer(choice){
+  if(answered) return; answered=true;
+  const c = deck[i], ok = choice===c.a;
+  if(ok){ score += PTS[c.t]; streak++; } else streak=0;
+  results.push({c, ok});
+  $('qVerdict').className = 'verdict '+(ok?'ok':'no');
+  $('qVerdict').textContent = ok ? (streak>=5 ? `✅ Nailed it! ${streak} in a row 🔥` : '✅ Correct!') : '❌ Not quite';
+  $('qAnswer').textContent = `It's ${c.a?'RIGHT':'WRONG'}.`;
+  $('qWhy').textContent = c.w;
+  $('qCard').classList.add('flipped');
+  $('choices').style.display='none'; $('nextRow').style.display='flex';
+  $('bNext').textContent = i===deck.length-1 ? 'Finish the shift 🏁' : 'Next pallet ▶';
+  $('hudScore').textContent = `⭐ ${score} pts`; $('hudStreak').textContent = `🔥 ${streak}`;
+}
+function next(){ if(!answered) return; i++; if(i>=deck.length) finish(); else render(); }
+
+function finish(){
+  show('results');
+  const pass = score>=PASS;
+  const prev = +store.get('dishLpnBest')||0; if(score>prev) store.set('dishLpnBest', score);
+  $('rTitle').textContent = pass ? '🎉 Truck unloaded - you passed!' : '🚧 Not quite - back to the dock';
+  $('rScore').innerHTML = `<span class="${pass?'pass':'fail'}">${score}</span><span class="muted" style="font-size:28px"> / 70</span>`;
+  $('rBar').style.width = (score/70*100)+'%'; $('rBar').style.background = pass ? 'var(--green)':'var(--red)';
+  const missedCrit = results.filter(r=>!r.ok && r.c.t==='critical').length;
+  $('rMsg').textContent = pass
+    ? (missedCrit ? `Pass mark is ${PASS}. You missed ${missedCrit} critical card${missedCrit>1?'s':''} - give those a look before your first shift.` : `Pass mark is ${PASS}. Clean sweep on the critical cards - you're dock-ready. 💪`)
+    : `Pass mark is ${PASS}. You were ${PASS-score} point${PASS-score>1?'s':''} short. Study the cards below and run it again - it reshuffles every time.`;
+  const rows = ['critical','necessary','basic'].map(t=>{
+    const all = results.filter(r=>r.c.t===t), ok = all.filter(r=>r.ok).length;
+    return `<tr><td><span class="tier ${t}">${t.toUpperCase()}</span></td><td>${ok} / ${all.length}</td><td>${ok*PTS[t]} / ${all.length*PTS[t]}</td></tr>`;
+  }).join('');
+  $('rTable').innerHTML = rows;
+  const misses = results.filter(r=>!r.ok).sort((a,b)=>(a.c.t==='critical'?0:1)-(b.c.t==='critical'?0:1));
+  $('rMissTitle').textContent = misses.length ? `Cards to review (${misses.length})` : 'Nothing to review - perfect run!';
+  $('rMiss').innerHTML = misses.map(r=>`<div class="miss"><span class="tier ${r.c.t}">${r.c.t.toUpperCase()}</span> <span class="topic">${r.c.k}</span><div style="margin:6px 0">"${r.c.q}"</div><b>It's ${r.c.a?'RIGHT':'WRONG'}.</b> ${r.c.w}</div>`).join('');
+  $('rStudyMiss').style.display = misses.length ? 'inline-block':'none';
+  $('rCert').style.display = pass ? 'inline-block':'none';
+  $('cName').textContent = ($('name').value.trim() || 'DISH Team Member');
+  $('cScore').textContent = `${score} / 70`;
+  $('cDate').textContent = new Date().toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
+  if(pass) confetti();
+}
+
+// ---------- study ----------
+let sDeck=[], si=0, sFilter='all';
+function startStudy(cards){
+  sDeck = (cards && cards.length) ? cards : Q.slice(); si=0; sFilter = cards ? 'missed' : 'all';
+  buildFilters(!!cards); show('study'); sRender();
+}
+function buildFilters(hasMissed){
+  const opts = [['all','All 50'],['critical','Critical'],['necessary','Necessary'],['basic','Basic']];
+  if(hasMissed) opts.unshift(['missed','My misses']);
+  $('filters').innerHTML = opts.map(([k,l])=>`<button data-f="${k}" class="${k===sFilter?'on':''}">${l}</button>`).join('');
+  $('filters').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    sFilter=b.dataset.f;
+    sDeck = sFilter==='all' ? Q.slice() : sFilter==='missed' ? results.filter(r=>!r.ok).map(r=>r.c) : Q.filter(q=>q.t===sFilter);
+    if(!sDeck.length) sDeck=Q.slice(); si=0; buildFilters(hasMissed); sRender();
+  });
+}
+function sRender(){
+  const c = sDeck[si]; $('sCard').classList.remove('flipped');
+  $('sTier').className='tier '+c.t; $('sTier').textContent=tierLabel(c.t); $('sTopic').textContent=c.k;
+  $('sQ').textContent=c.q; $('sLabel').textContent=lpn(si+1);
+  $('sAns').className='verdict '+(c.a?'ok':'no'); $('sAns').textContent = c.a ? '✅ RIGHT' : '❌ WRONG';
+  $('sWhy').textContent=c.w; $('sCount').textContent=`${si+1} / ${sDeck.length}`;
+}
+
+// ---------- confetti ----------
+function confetti(){
+  const cv=$('confetti'), x=cv.getContext('2d'); cv.width=innerWidth; cv.height=innerHeight;
+  const icons=['📦','🚚','✅','⭐','🎉'], ps=Array.from({length:90},()=>({x:Math.random()*cv.width,y:-20-Math.random()*cv.height,v:2+Math.random()*4,r:Math.random()*6,e:icons[Math.floor(Math.random()*icons.length)]}));
+  let t=0; (function f(){ x.clearRect(0,0,cv.width,cv.height); x.font='24px serif';
+    ps.forEach(p=>{p.y+=p.v; p.x+=Math.sin((p.y+p.r)/30); x.fillText(p.e,p.x,p.y);}); if(++t<260) requestAnimationFrame(f); else x.clearRect(0,0,cv.width,cv.height); })();
+}
+
+// ---------- wiring ----------
+$('goQuiz').onclick=startQuiz; $('studyToQuiz').onclick=startQuiz; $('rRetry').onclick=startQuiz;
+$('goStudy').onclick=()=>startStudy(); $('studyHome').onclick=()=>show('start');
+$('rStudyMiss').onclick=()=>startStudy(results.filter(r=>!r.ok).map(r=>r.c));
+$('rCert').onclick=()=>window.print();
+$('bRight').onclick=()=>answer(true); $('bWrong').onclick=()=>answer(false); $('bNext').onclick=next;
+$('sCard').onclick=()=>$('sCard').classList.toggle('flipped');
+$('sNext').onclick=()=>{si=(si+1)%sDeck.length; sRender();}; $('sPrev').onclick=()=>{si=(si-1+sDeck.length)%sDeck.length; sRender();};
+document.addEventListener('keydown',e=>{
+  if(!$('quiz').classList.contains('active')) return;
+  const k=e.key.toLowerCase(); if(k==='r') answer(true); else if(k==='w') answer(false); else if(k==='enter') next();
+});
+</script>
+</body>
+</html>
