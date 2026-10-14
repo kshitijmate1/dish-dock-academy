@@ -219,6 +219,7 @@ const FORM = {
 };
 
 const PASS = 40, TOTAL = 50, PER_Q = 2;
+const DRAW = {critical:10, necessary:10, basic:5};   // cards drawn per attempt from the pool
 
 // ===== UI text =====
 const T = {
@@ -234,7 +235,7 @@ const T = {
     best:n=>`🏆 Your best on this device: ${n} / ${TOTAL}`,
     studyTitle:"🗂️ Flashcards", studyHint:"Tap the card to flip it. No points here - just learning.",
     prev:"◀ Prev", next:"Next ▶", studyToQuiz:"🚛 I'm ready - start the quiz", home:"Home",
-    fAll:"All 25", fMiss:"My misses",
+    fAll:"All 50", fMiss:"My misses",
     dock:"DOCK 🏁", right:"✅ Right", wrong:"❌ Wrong",
     hint:"Answer every card to move on. Keyboard: R = Right · W = Wrong · Enter = Next",
     nextPallet:"Next pallet ▶", finishShift:"Finish the shift 🏁",
@@ -268,7 +269,7 @@ const T = {
     best:n=>`🏆 Tu mejor puntaje en este dispositivo: ${n} / ${TOTAL}`,
     studyTitle:"🗂️ Tarjetas de estudio", studyHint:"Toca la tarjeta para voltearla. Aquí no hay puntos, solo aprendizaje.",
     prev:"◀ Anterior", next:"Siguiente ▶", studyToQuiz:"🚛 Estoy listo - empezar el quiz", home:"Inicio",
-    fAll:"Las 25", fMiss:"Mis errores",
+    fAll:"Las 50", fMiss:"Mis errores",
     dock:"MUELLE 🏁", right:"✅ Correcto", wrong:"❌ Incorrecto",
     hint:"Contesta cada tarjeta para avanzar. Teclado: R = Correcto · W = Incorrecto · Enter = Siguiente",
     nextPallet:"Siguiente tarima ▶", finishShift:"Terminar el turno 🏁",
@@ -372,7 +373,85 @@ const Q = [
    qs:"Una vez que un LPN ha tenido inventario, se puede borrar cuando sea.", ws:"Solo los LPNs Unused (sin usar) se pueden borrar. Los In-Use y Used guardan su historial."},
   {t:"basic", k:"Lookups", a:true,
    q:"The LPN Viewer shows what's on an LPN, where it is, and its move history.", w:"Inventory → LPN Viewer → scan the LPN.",
-   qs:"El LPN Viewer muestra qué hay en un LPN, dónde está y su historial de movimientos.", ws:"Inventory → LPN Viewer → escanea el LPN."}
+   qs:"El LPN Viewer muestra qué hay en un LPN, dónde está y su historial de movimientos.", ws:"Inventory → LPN Viewer → escanea el LPN."},
+  // ---------- CRITICAL (pool 2) ----------
+  {t:"critical", k:"Receiving", a:true,
+   q:"With LPNs turned on, every unit you receive has to go onto an LPN.", w:"Mobile receiving with LPNs doesn't let stock land loose - each receipt ends with an LPN scan.",
+   qs:"Con los LPNs activados, cada unidad que recibes tiene que ir en un LPN.", ws:"La recepción móvil con LPNs no deja que el inventario quede suelto: cada recepción termina con el escaneo de un LPN."},
+  {t:"critical", k:"Receiving", a:false,
+   q:"A truck's stock is available to pick as soon as the inbound shows Arrived.", w:"Arrived only means the truck is at the door. Stock is available once it's received onto LPNs (and put away where it can be picked).",
+   qs:"El inventario de un camión está disponible para surtir en cuanto el inbound aparece como Arrived.", ws:"Arrived solo significa que el camión está en la puerta. El inventario está disponible cuando se recibe en LPNs (y se acomoda donde se pueda surtir)."},
+  {t:"critical", k:"Downstream", a:true,
+   q:"Scanning the wrong LPN at receiving puts the stock on that container - and the mistake follows that LPN through putaway, replen and picking.", w:"Everything downstream trusts the LPN. Fix it at receiving with Edit before the pallet moves.",
+   qs:"Escanear el LPN equivocado en la recepción pone el inventario en ese contenedor, y el error sigue a ese LPN en putaway, replen y surtido.", ws:"Todos los flujos siguientes confían en el LPN. Corrígelo en la recepción con Edit antes de mover la tarima."},
+  {t:"critical", k:"Corrections", a:false,
+   q:"To unreceive units on an LPN, you have to delete the LPN.", w:"Use Received Summary → Edit → scan the LPN → lower the quantity → Save. LPNs that have held stock can't be deleted.",
+   qs:"Para des-recibir unidades de un LPN, tienes que borrar el LPN.", ws:"Usa Received Summary → Edit → escanea el LPN → baja la cantidad → Save. Los LPNs que ya tuvieron inventario no se pueden borrar."},
+  {t:"critical", k:"Replen", a:false,
+   q:"Choosing Break out LPN in replen sends the whole pallet to the pick face.", w:"Break out moves only the units you scan. Full LPN is the option that moves the whole container.",
+   qs:"Elegir Break out LPN en el replen manda toda la tarima a la ubicación de surtido.", ws:"Break out mueve solo las unidades que escaneas. Full LPN es la opción que mueve todo el contenedor."},
+  {t:"critical", k:"Picking", a:true,
+   q:"When you pick from an LPN, the LPN scan tells ShipHero which container the units came out of, so that LPN's quantity goes down.", w:"That's how LPN quantities stay accurate for the next pick, replen and count.",
+   qs:"Cuando surtes de un LPN, el escaneo del LPN le dice a ShipHero de qué contenedor salieron las unidades, y la cantidad de ese LPN baja.", ws:"Así las cantidades de los LPNs se mantienen correctas para el siguiente surtido, replen y conteo."},
+  {t:"critical", k:"Cycle count", a:false,
+   q:"When counting a pallet with boxes on it, you only scan the pallet - the boxes count themselves.", w:"Scan the pallet first, then each box LPN and what's inside it.",
+   qs:"Al contar una tarima con cajas encima, solo escaneas la tarima; las cajas se cuentan solas.", ws:"Escanea primero la tarima y luego cada LPN de caja y lo que tiene adentro."},
+  {t:"critical", k:"Downstream", a:true,
+   q:"Each LPN carries the lot and expiry of what's on it, so FEFO can point to the right container.", w:"Lot data rides with the LPN, which is how replen and picking find the oldest expiry first.",
+   qs:"Cada LPN lleva el lote y la caducidad de lo que tiene, así FEFO puede señalar el contenedor correcto.", ws:"La información del lote viaja con el LPN; así el replen y el surtido encuentran primero la caducidad más próxima."},
+  {t:"critical", k:"Putaway", a:false,
+   q:"As soon as receiving is complete, ShipHero moves the pallets to their storage locations by itself.", w:"Received pallets stay at the dock door location until someone puts them away with Putaway.",
+   qs:"En cuanto se completa la recepción, ShipHero mueve las tarimas a sus ubicaciones de almacenaje por sí solo.", ws:"Las tarimas recibidas se quedan en la ubicación de la puerta del muelle hasta que alguien las acomoda con Putaway."},
+  {t:"critical", k:"Moves", a:true,
+   q:"In Transfer Entire Location, scanning an LPN as 'From' moves just that LPN, not everything in the location.", w:"Scan a location as From to move everything; scan an LPN to move only that container.",
+   qs:"En Transfer Entire Location, escanear un LPN como 'From' mueve solo ese LPN, no todo lo que hay en la ubicación.", ws:"Escanea una ubicación como From para mover todo; escanea un LPN para mover solo ese contenedor."},
+  // ---------- NECESSARY (pool 2) ----------
+  {t:"necessary", k:"Receiving", a:false,
+   q:"After you scan the LPN, nothing on screen confirms it - you have to check later on the web.", w:"A green confirmation shows the LPN, SKU and quantity right away.",
+   qs:"Después de escanear el LPN, nada en la pantalla lo confirma; tienes que revisar después en la web.", ws:"Una confirmación en verde muestra el LPN, el SKU y la cantidad de inmediato."},
+  {t:"necessary", k:"Receiving", a:true,
+   q:"Completing receiving on your iPad closes it for you - other receivers on the same inbound can keep going.", w:"Each receiver completes their own work. The inbound is done once everyone has finished.",
+   qs:"Completar la recepción en tu iPad la cierra para ti; los demás en el mismo inbound pueden seguir.", ws:"Cada persona completa su propio trabajo. El inbound termina cuando todos acabaron."},
+  {t:"necessary", k:"Nesting", a:true,
+   q:"Two people can add boxes to the same pallet LPN.", w:"Several receivers can scan box LPNs onto the same pallet.",
+   qs:"Dos personas pueden agregar cajas al mismo LPN de tarima.", ws:"Varias personas pueden escanear LPNs de caja en la misma tarima."},
+  {t:"necessary", k:"Nesting", a:false,
+   q:"The queue of loose boxes waiting to be nested is shared by everyone on the inbound.", w:"The Loose Cartons queue is per user - you can only palletize your own boxes.",
+   qs:"La fila de cajas sueltas esperando a anidarse es compartida por todos en el inbound.", ws:"La fila de Loose Cartons es por usuario: solo puedes paletizar tus propias cajas."},
+  {t:"necessary", k:"Cycle count", a:true,
+   q:"Marking an LPN 'not found' in a count flags it as missing, and its stock can't be allocated until it turns up.", w:"On close, the LPN moves to the missing-LPN location so nobody gets sent to pick from it.",
+   qs:"Marcar un LPN como 'not found' en un conteo lo registra como perdido, y su inventario no se puede asignar hasta que aparezca.", ws:"Al cerrar, el LPN se mueve a la ubicación de LPNs perdidos para que nadie vaya a surtir de él."},
+  {t:"necessary", k:"Cycle count", a:false,
+   q:"An LPN found in a location where it wasn't expected gets ignored by the count.", w:"It's tagged Unexpected and moved to that location when the count is closed.",
+   qs:"Un LPN encontrado en una ubicación donde no se esperaba es ignorado por el conteo.", ws:"Se marca como Unexpected y se mueve a esa ubicación al cerrar el conteo."},
+  {t:"necessary", k:"Cycle count", a:true,
+   q:"Starting a cycle count on a location blocks picking from it until the count is finished.", w:"Counting locations are made non-pickable so the count isn't thrown off mid-way.",
+   qs:"Iniciar un conteo cíclico en una ubicación bloquea el surtido ahí hasta que se termina el conteo.", ws:"Las ubicaciones en conteo quedan como no surtibles para que el conteo no se altere a medias."},
+  {t:"necessary", k:"Lookups", a:false,
+   q:"The Item Locations report can't tell loose units apart from units inside LPNs.", w:"It has separate Loose Units and Units in LPN columns.",
+   qs:"El reporte Item Locations no puede distinguir las unidades sueltas de las unidades dentro de LPNs.", ws:"Tiene columnas separadas: Loose Units y Units in LPN."},
+  {t:"necessary", k:"Nesting", a:true,
+   q:"A box can be nested onto a pallet later, using Transfer Entire Location (From = box LPN, To = pallet LPN).", w:"Nesting isn't only at receiving - you can do it any time from the Inventory menu.",
+   qs:"Una caja se puede anidar en una tarima después, usando Transfer Entire Location (From = LPN de caja, To = LPN de tarima).", ws:"El anidado no es solo en la recepción: puedes hacerlo cuando sea desde el menú Inventory."},
+  {t:"necessary", k:"Receiving", a:false,
+   q:"Units scanned onto a reject LPN still count as available stock.", w:"Rejected units are kept off available inventory.",
+   qs:"Las unidades escaneadas en un LPN de rechazo siguen contando como inventario disponible.", ws:"Las unidades rechazadas quedan fuera del inventario disponible."},
+  // ---------- BASIC (pool 2) ----------
+  {t:"basic", k:"LPN basics", a:true,
+   q:"LPN statuses are Unused, In-Use and Used, and ShipHero changes them automatically.", w:"Unused = never had stock, In-Use = has stock, Used = had stock, now empty.",
+   qs:"Los estados de un LPN son Unused, In-Use y Used, y ShipHero los cambia automáticamente.", ws:"Unused = nunca tuvo inventario, In-Use = tiene inventario, Used = tuvo y ahora está vacío."},
+  {t:"basic", k:"LPN basics", a:false,
+   q:"A box LPN can hold a pallet LPN inside it.", w:"It's the other way around - boxes go on pallets, and a pallet is always the top level.",
+   qs:"Un LPN de caja puede tener un LPN de tarima adentro.", ws:"Es al revés: las cajas van sobre las tarimas, y la tarima siempre es el nivel superior."},
+  {t:"basic", k:"LPN basics", a:true,
+   q:"An LPN label can go on a box or on a pallet.", w:"There are box LPNs (LPN-BO…) and pallet LPNs (LPN-PA…).",
+   qs:"Una etiqueta LPN puede ir en una caja o en una tarima.", ws:"Hay LPNs de caja (LPN-BO…) y LPNs de tarima (LPN-PA…)."},
+  {t:"basic", k:"LPN basics", a:false,
+   q:"An LPN that has stock on it shows the status Unused.", w:"An LPN with stock is In-Use.",
+   qs:"Un LPN que tiene inventario aparece con el estado Unused.", ws:"Un LPN con inventario está In-Use."},
+  {t:"basic", k:"LPN basics", a:true,
+   q:"Every LPN number is unique - no two containers share one.", w:"That's what lets ShipHero track each container on its own.",
+   qs:"Cada número de LPN es único: no hay dos contenedores con el mismo.", ws:"Eso es lo que permite a ShipHero rastrear cada contenedor por separado."}
 ];
 
 // ---------- helpers ----------
@@ -407,7 +486,7 @@ function startQuiz(){
   const f=$('first').value.trim(), l=$('last').value.trim();
   if(!f || !l){ show('start'); $('nameErr').style.display='block'; (f? $('last') : $('first')).focus(); return; }
   $('nameErr').style.display='none';
-  deck = shuffle(Q); i=0; score=0; streak=0; results=[]; startedAt=Date.now(); inQuiz=true; lastFinish=null;
+  deck = shuffle(['critical','necessary','basic'].flatMap(t=>shuffle(Q.filter(q=>q.t===t)).slice(0,DRAW[t]))); i=0; score=0; streak=0; results=[]; startedAt=Date.now(); inQuiz=true; lastFinish=null;
   show('quiz'); render();
 }
 function hud(){ $('hudQ').textContent = `📦 ${i+1}/${deck.length}`; $('hudScore').textContent = `⭐ ${score} / ${TOTAL}`; $('hudStreak').textContent = `🔥 ${streak}`; }
