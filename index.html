@@ -98,6 +98,7 @@
   #sCard .face.back{justify-content:flex-start;overflow-y:auto}
   .ctx{margin-top:14px;padding-top:12px;border-top:1px solid #2b3a52;font-size:15.5px;line-height:1.5;color:#cbd5e1}
   .ctx .lbl{display:block;font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--accent);margin:8px 0 2px}
+  .fliphint{position:absolute;left:0;right:0;bottom:16px;text-align:center;font-size:14px;font-weight:700;color:#57534e;letter-spacing:.3px}
   .miss .ctx{font-size:14px;margin-top:8px;padding-top:8px}
   .lang{display:flex;align-items:center;gap:8px;justify-content:flex-end;margin:-6px 0 10px}
   .lang button{border:1px solid var(--panel2);background:transparent;color:var(--ink);border-radius:999px;padding:6px 14px;font-weight:700;cursor:pointer;font-size:14px}
@@ -154,7 +155,7 @@
       <details class="primer" id="primer" open><summary id="primerTitle"></summary><ol id="primerList"></ol><div class="rule" id="primerRule"></div></details>
       <div class="filters" id="filters"></div>
       <div class="scene"><div class="card" id="sCard">
-        <div class="face front"><div class="label" id="sLabel"></div><div><span class="tier" id="sTier"></span><span class="topic" id="sTopic"></span></div><div class="q" id="sQ" style="margin-top:14px"></div></div>
+        <div class="face front"><div class="label" id="sLabel"></div><div><span class="tier" id="sTier"></span><span class="topic" id="sTopic"></span></div><div class="q" id="sQ" style="margin-top:14px"></div><div class="fliphint" id="sFlip"></div></div>
         <div class="face back"><div class="verdict" id="sAns"></div><div class="why" id="sWhy"></div><div class="ctx" id="sCtx"></div></div>
       </div></div>
       <div class="row" style="justify-content:space-between;align-items:center">
@@ -223,7 +224,7 @@
 <footer><span data-i18n="footer"></span> <span id="ver"></span></footer>
 
 <script>
-const VERSION = 'v1.1 · Oct 14, 2026';
+const VERSION = 'v1.2 · Oct 14, 2026';
 const PASS = 40, TOTAL = 50, PER_Q = 2, CRIT_MIN = 8;
 const DRAW = {critical:10, necessary:10, basic:5};   // cards drawn per attempt from the pool
 
@@ -458,47 +459,6 @@ const Q = [
    qs:"Cada número de LPN es único: no hay dos contenedores con el mismo.", ws:"Eso es lo que permite a ShipHero rastrear cada contenedor por separado."}
 ];
 // ===== Study context (topic blurbs + primer) =====
-const TOPIC_INFO = {
-  "Receiving": {
-    en:{ctx:"Receiving is where every LPN's story starts. Whatever gets scanned onto an LPN here - SKU, quantity, lot, expiry - is what putaway, replen, picking and counts will trust later.", where:"iPad → Receiving → Inbound → open the inbound"},
-    es:{ctx:"La recepción es donde empieza la historia de cada LPN. Lo que se escanea aquí en un LPN (SKU, cantidad, lote, caducidad) es lo que putaway, replen, surtido y conteos van a usar después.", where:"iPad → Receiving → Inbound → abrir el inbound"}},
-  "LPN basics": {
-    en:{ctx:"An LPN is a license plate for a container. The container can move anywhere in the building - the LPN and everything recorded on it go with it.", where:"Web: Inventory & Locations → LPNs · iPad: Inventory → LPN Viewer"},
-    es:{ctx:"Un LPN es una placa para un contenedor. El contenedor puede moverse a cualquier parte del almacén y el LPN, con todo lo registrado, va con él.", where:"Web: Inventory & Locations → LPNs · iPad: Inventory → LPN Viewer"}},
-  "Labels": {
-    en:{ctx:"LPN labels are made ahead of time on the web app and brought to the dock. The barcode is what everyone scans later, so it has to stay readable and on the right container.", where:"Web: Inventory & Locations → LPNs → Create LPN"},
-    es:{ctx:"Las etiquetas LPN se hacen con anticipación en la app web y se llevan al muelle. Todos van a escanear ese código después, así que debe quedar legible y en el contenedor correcto.", where:"Web: Inventory & Locations → LPNs → Create LPN"}},
-  "Nesting": {
-    en:{ctx:"Nesting puts box LPNs on a pallet LPN so they travel together. One scan of the pallet then moves, counts or puts away everything on it.", where:"Receiving: Received Summary → Palletize Cartons · Later: Inventory → Transfer Entire Location"},
-    es:{ctx:"Anidar pone LPNs de caja sobre un LPN de tarima para que viajen juntos. Un escaneo de la tarima mueve, cuenta o acomoda todo lo que tiene.", where:"Recepción: Received Summary → Palletize Cartons · Después: Inventory → Transfer Entire Location"}},
-  "Putaway": {
-    en:{ctx:"Putaway takes received pallets from the dock to where they'll live. With LPNs you scan the container, then choose to move all of it (Full LPN) or part of it (Some Items).", where:"iPad → Products → Putaway"},
-    es:{ctx:"Putaway lleva las tarimas recibidas del muelle a su lugar. Con LPNs escaneas el contenedor y eliges mover todo (Full LPN) o una parte (Some Items).", where:"iPad → Products → Putaway"}},
-  "Unpacking": {
-    en:{ctx:"Unpacking pulls some units out of an LPN. The units land loose where you put them; the LPN keeps the rest, along with its label and history.", where:"Putaway → Some Items · Replen → Break out LPN · Inventory → Search by Location"},
-    es:{ctx:"Desempacar saca algunas unidades de un LPN. Las unidades quedan sueltas donde las pongas; el LPN se queda con el resto, su etiqueta e historial.", where:"Putaway → Some Items · Replen → Break out LPN · Inventory → Search by Location"}},
-  "Replen": {
-    en:{ctx:"Replen refills pick locations from overstock. When the overstock is on LPNs, ShipHero points you to the right one by expiry (FEFO), and you either move the whole LPN or break out just what's needed.", where:"iPad → Replenishment (new)"},
-    es:{ctx:"El replen rellena las ubicaciones de surtido desde el sobre-inventario. Cuando está en LPNs, ShipHero te indica el correcto por caducidad (FEFO) y mueves el LPN completo o sacas solo lo necesario.", where:"iPad → Replenishment (new)"}},
-  "Picking": {
-    en:{ctx:"Picking still follows FEFO. When the stock you're sent to is on an LPN, the extra LPN scan tells ShipHero which container you took from, so that LPN's quantity stays right.", where:"iPad / handheld → picking (MIB) as today"},
-    es:{ctx:"El surtido sigue FEFO. Cuando el inventario está en un LPN, el escaneo extra le dice a ShipHero de qué contenedor tomaste, para que la cantidad de ese LPN siga correcta.", where:"iPad / handheld → surtido (MIB) como hoy"}},
-  "Cycle count": {
-    en:{ctx:"Cycle counts check that the system matches the shelf. With LPNs you count container by container - scan the LPN, count what's inside - so mistakes show up on the exact LPN.", where:"iPad → Inventory → Cycle Count"},
-    es:{ctx:"Los conteos cíclicos revisan que el sistema coincida con el rack. Con LPNs cuentas contenedor por contenedor (escanea el LPN, cuenta lo de adentro) y así los errores aparecen en el LPN exacto.", where:"iPad → Inventory → Cycle Count"}},
-  "Downstream": {
-    en:{ctx:"Every flow after receiving trusts what ShipHero thinks is on each LPN and where it is. If the system and the floor disagree, picks, replen and counts all go wrong together.", where:"Golden rule: if it moves physically, scan the move in ShipHero"},
-    es:{ctx:"Cada flujo después de la recepción confía en lo que ShipHero cree que hay en cada LPN y dónde está. Si el sistema y el piso no coinciden, el surtido, el replen y los conteos fallan juntos.", where:"Regla de oro: si se mueve físicamente, escanea el movimiento en ShipHero"}},
-  "Moves": {
-    en:{ctx:"Moves keep ShipHero in sync with the floor. Scanning an LPN moves just that container; scanning a location moves everything in it.", where:"iPad → Inventory → Transfer Entire Location"},
-    es:{ctx:"Los movimientos mantienen a ShipHero al día con el piso. Escanear un LPN mueve solo ese contenedor; escanear una ubicación mueve todo lo que tiene.", where:"iPad → Inventory → Transfer Entire Location"}},
-  "Corrections": {
-    en:{ctx:"Mistakes at receiving get fixed on the iPad, where ShipHero knows which LPN holds what. Fixing it early stops the wrong data from spreading downstream.", where:"iPad → Received Summary → Edit → scan the LPN"},
-    es:{ctx:"Los errores de recepción se corrigen en el iPad, donde ShipHero sabe qué LPN tiene qué. Corregir temprano evita que el dato equivocado se pase a los otros flujos.", where:"iPad → Received Summary → Edit → escanear el LPN"}},
-  "Lookups": {
-    en:{ctx:"When you're not sure what's on a container or where it went, look it up instead of guessing.", where:"iPad: Inventory → LPN Viewer · Web: LPNs page, Item Locations report"},
-    es:{ctx:"Cuando no estés seguro de qué tiene un contenedor o a dónde fue, búscalo en lugar de adivinar.", where:"iPad: Inventory → LPN Viewer · Web: página LPNs, reporte Item Locations"}}
-};
 const PRIMER = {
   en:{title:"📘 How LPNs flow through the warehouse", steps:[
     ["Print labels","LPN labels are printed on the web app before the truck arrives."],
@@ -509,7 +469,7 @@ const PRIMER = {
     ["Pick","Picking follows FEFO. If the stock is on an LPN, scan the location and the LPN, so that LPN's quantity goes down."],
     ["Count","Cycle counts go container by container: scan the LPN, count what's inside, finish the LPN."]],
     rule:"Golden rule: if something moves on the floor, the move gets scanned in ShipHero. Otherwise every flow after it is working off the wrong information.",
-    ctxLabel:"Context", whereLabel:"Where you'll see it", whyLabel:"Why"},
+    detLabel:"Details", flipHint:"👆 Tap to flip for details"},
   es:{title:"📘 Cómo fluyen los LPNs en el almacén", steps:[
     ["Imprimir etiquetas","Las etiquetas LPN se imprimen en la app web antes de que llegue el camión."],
     ["Llegada","Abre el inbound en el iPad y escanea la puerta del muelle: el camión queda como Arrived. Todavía no se recibe nada."],
@@ -519,9 +479,121 @@ const PRIMER = {
     ["Surtir","El surtido sigue FEFO. Si el inventario está en un LPN, escanea la ubicación y el LPN para que baje la cantidad de ese LPN."],
     ["Contar","Los conteos cíclicos van contenedor por contenedor: escanea el LPN, cuenta lo de adentro y termina el LPN."]],
     rule:"Regla de oro: si algo se mueve en el piso, el movimiento se escanea en ShipHero. Si no, todos los flujos siguientes trabajan con información equivocada.",
-    ctxLabel:"Contexto", whereLabel:"Dónde lo verás", whyLabel:"Por qué"}
+    detLabel:"Detalles", flipHint:"👆 Toca para voltear y ver detalles"}
 };
-const info = c => (TOPIC_INFO[c.k]||{})[lang];
+// ===== Card-specific study details, same order as Q (50) - [English, Spanish] =====
+const DETAILS = [
+  // pool 1 - critical
+  ["On the iPad, the units you scan wait until the LPN scan. Then the green confirmation appears and the PO's received quantity goes up. Walk away before scanning the LPN and that stock isn't in ShipHero yet.",
+   "En el iPad, las unidades que escaneas esperan hasta el escaneo del LPN. Entonces aparece la confirmación verde y sube la cantidad recibida de la PO. Si te vas antes de escanear el LPN, ese inventario todavía no está en ShipHero."],
+  ["The dock door scan starts the arrival clock and becomes the location your LPNs land in (tap the location indicator to change it). Every pallet still needs product → quantity → LPN.",
+   "El escaneo de la puerta del muelle inicia el reloj de llegada y se vuelve la ubicación donde quedan tus LPNs (toca el indicador de ubicación para cambiarla). Cada tarima todavía necesita producto → cantidad → LPN."],
+  ["The office usually creates the inbound on the web and links the PO(s). For a surprise truck it can be created on the iPad: Receiving → Inbound → Create inbound shipment. One inbound can cover several POs on the same truck.",
+   "La oficina normalmente crea el inbound en la web y le liga la(s) PO(s). Para un camión sorpresa se puede crear en el iPad: Receiving → Inbound → Create inbound shipment. Un inbound puede cubrir varias POs del mismo camión."],
+  ["Example: you scan 40 cases for pallet 1, then start scanning pallet 2's cases before scanning pallet 1's LPN. All 80 land on pallet 1's LPN, and the system is wrong for both pallets.",
+   "Ejemplo: escaneas 40 cajas de la tarima 1 y empiezas a escanear las de la tarima 2 antes de escanear el LPN de la tarima 1. Las 80 quedan en el LPN de la tarima 1 y el sistema queda mal para las dos."],
+  ["When you put a pallet away or transfer it, ShipHero just updates the LPN's location. The LPN Viewer timeline shows every location that LPN has been in.",
+   "Cuando acomodas o transfieres una tarima, ShipHero solo actualiza la ubicación del LPN. La línea de tiempo en LPN Viewer muestra todas las ubicaciones por las que ha pasado ese LPN."],
+  ["In Putaway: scan the pallet LPN → keep Full LPN → scan the destination. Every box LPN nested on it moves too, and each box keeps its own contents and lot.",
+   "En Putaway: escanea el LPN de la tarima → deja Full LPN → escanea el destino. Todas las cajas anidadas se mueven también, y cada caja conserva su contenido y lote."],
+  ["Full LPN takes the whole container to the pick location. Break out LPN lets you scan only the units you need - they land loose in the pick location and the LPN stays in overstock with the rest.",
+   "Full LPN lleva el contenedor completo a la ubicación de surtido. Break out LPN te deja escanear solo las unidades que necesitas: quedan sueltas en la ubicación de surtido y el LPN se queda en el sobre-inventario con el resto."],
+  ["The pick card says From LPN or Scan LPN when the stock is on a container. If several LPNs qualify, tap View valid LPNs - the one tagged SUGGESTED has the most units.",
+   "La tarjeta de surtido dice From LPN o Scan LPN cuando el inventario está en un contenedor. Si varios LPNs aplican, toca View valid LPNs: el marcado SUGGESTED es el que tiene más unidades."],
+  ["Scan the location, then each LPN and the units inside it, and tap Finish LPN count. Loose units in the same location get counted too, then Finish location count.",
+   "Escanea la ubicación, luego cada LPN y las unidades que tiene adentro, y toca Finish LPN count. Las unidades sueltas en la misma ubicación también se cuentan, y luego Finish location count."],
+  ["Example: a pallet is moved with the forklift to make room but nobody scans it. The next replen sends someone to the old spot, the pick comes up short, and the next count shows one location over and one under.",
+   "Ejemplo: una tarima se mueve con el montacargas para hacer espacio pero nadie la escanea. El siguiente replen manda a alguien al lugar anterior, el surtido sale corto y el siguiente conteo muestra una ubicación de más y otra de menos."],
+  // pool 1 - necessary
+  ["After the first pallet, swipe up to Received Summary, tap Duplicate on that pallet's card and scan each new LPN. Tap Finish duplicating when done. A partial or different pallet goes through the normal flow.",
+   "Después de la primera tarima, desliza hacia arriba a Received Summary, toca Duplicate en la tarjeta de esa tarima y escanea cada LPN nuevo. Toca Finish duplicating al terminar. Una tarima parcial o diferente va por el flujo normal."],
+  ["Nesting is box → pallet only, and a pallet LPN is always the top level. The one exception (3 levels) is inside the wholesale packing flow.",
+   "El anidado es solo caja → tarima, y el LPN de tarima siempre es el nivel superior. La única excepción (3 niveles) es dentro del flujo de empaque de mayoreo."],
+  ["Example: an LPN holds 40 cases and you break out 5 into a pick location. The 5 become loose stock in that location and the LPN shows 35 - same label, same lot, same history.",
+   "Ejemplo: un LPN tiene 40 cajas y sacas 5 a una ubicación de surtido. Las 5 quedan como inventario suelto en esa ubicación y el LPN muestra 35: misma etiqueta, mismo lote, mismo historial."],
+  ["On the web: Inventory & Locations → LPNs → Create LPN → choose Pallet or Box and a quantity → check Print LPN labels → Create. The iPad prints product barcodes, not LPN labels.",
+   "En la web: Inventory & Locations → LPNs → Create LPN → elige Pallet o Box y una cantidad → marca Print LPN labels → Create. El iPad imprime códigos de producto, no etiquetas LPN."],
+  ["Each receiver works in My Work, and All Inbound shows everyone's progress. The inbound screen refreshes on its own so pending quantities stay in sync across iPads.",
+   "Cada persona trabaja en My Work y All Inbound muestra el avance de todos. La pantalla del inbound se actualiza sola para que las cantidades pendientes coincidan entre iPads."],
+  ["Scan a GS1 / QR barcode and the lot and expiry fill in for you. Otherwise the lot screen opens - pick an existing lot or tap Add new lot and enter the lot number and expiry.",
+   "Escanea un código GS1 / QR y el lote y la caducidad se llenan solos. Si no, se abre la pantalla de lote: elige un lote existente o toca Add new lot y captura el número de lote y la caducidad."],
+  ["You'll see a badge with how many units are over, then a confirmation when you scan the LPN. Confirming lets the extra units through, so double-check the count before you tap it.",
+   "Verás un indicador con cuántas unidades sobran y luego una confirmación al escanear el LPN. Confirmar deja pasar las unidades de más, así que revisa bien el conteo antes de tocarlo."],
+  ["The PO page only knows totals, not which LPN holds them, so unreceiving there can leave LPN quantities wrong. On the iPad: Received Summary → Edit → scan the LPN (the box LPN if it's nested) → lower the quantity → Save.",
+   "La página de la PO solo conoce totales, no qué LPN los tiene, así que des-recibir ahí puede dejar mal las cantidades de los LPNs. En el iPad: Received Summary → Edit → escanea el LPN (el de la caja si está anidada) → baja la cantidad → Save."],
+  ["Example: a location has 6 loose units and an LPN with 40. A pick for 4 comes out of the loose units first; you're only sent to the LPN once the loose stock runs out.",
+   "Ejemplo: una ubicación tiene 6 unidades sueltas y un LPN con 40. Un surtido de 4 sale primero de lo suelto; solo te mandan al LPN cuando se acaba lo suelto."],
+  ["Save progress keeps finished LPNs and loose counts, but an LPN you were halfway through is dropped and shows up as a discrepancy. Finish the LPN you're on, then save.",
+   "Save progress guarda los LPNs terminados y los conteos sueltos, pero un LPN que llevabas a la mitad se pierde y aparece como discrepancia. Termina el LPN en el que vas y luego guarda."],
+  // pool 1 - basic
+  ["The LPN is a barcode label for a container. Scanning it tells ShipHero everything on that container - SKU, quantity, lot, expiry and location.",
+   "El LPN es una etiqueta con código de barras para un contenedor. Al escanearlo, ShipHero sabe todo lo que tiene: SKU, cantidad, lote, caducidad y ubicación."],
+  ["Numbers count up as LPNs are created, e.g. LPN-PA15, LPN-PA16. Custom names aren't supported, so PA always means pallet and BO always means box.",
+   "Los números suben conforme se crean LPNs, por ejemplo LPN-PA15, LPN-PA16. No se pueden poner nombres propios, así que PA siempre es tarima y BO siempre es caja."],
+  ["Locations have their own barcodes, like a dock door or a rack slot. An LPN sits in a location - you'll often scan the location and then the LPN.",
+   "Las ubicaciones tienen sus propios códigos, como una puerta del muelle o un espacio del rack. Un LPN está en una ubicación; muchas veces escaneas la ubicación y luego el LPN."],
+  ["Unused LPNs (printed, never used) can be deleted from the LPNs page on the web. In-Use and Used LPNs can't, because their history is needed for traceability.",
+   "Los LPNs Unused (impresos, nunca usados) se pueden borrar desde la página LPNs en la web. Los In-Use y Used no, porque su historial se necesita para la trazabilidad."],
+  ["Inventory → LPN Viewer → scan the LPN: status, current location, the pallet it's nested in, total and loose units, lots, and a timeline of every scan, move and nest.",
+   "Inventory → LPN Viewer → escanea el LPN: estado, ubicación actual, la tarima donde está anidado, unidades totales y sueltas, lotes y una línea de tiempo de cada escaneo, movimiento y anidado."],
+  // pool 2 - critical
+  ["Every receipt ends with an LPN scan - once LPNs are on there's no receive-to-location option in the mobile flow. That's why labels need to be at the dock before the truck is opened.",
+   "Cada recepción termina con el escaneo de un LPN: con LPNs activados no hay opción de recibir directo a ubicación en el flujo móvil. Por eso las etiquetas tienen que estar en el muelle antes de abrir el camión."],
+  ["Arrived only starts the clock. Stock can't be allocated or picked until it's received onto LPNs, and then it still has to be put away somewhere pickable.",
+   "Arrived solo inicia el reloj. El inventario no se puede asignar ni surtir hasta que se recibe en LPNs, y luego todavía hay que acomodarlo en un lugar surtible."],
+  ["Example: pallet A's cases get scanned onto pallet B's LPN. Putaway sends B's label to a slot holding A's product, replen pulls the wrong lot, and the next count flags both. Fix it with Edit before the pallet leaves the dock.",
+   "Ejemplo: las cajas de la tarima A se escanean en el LPN de la tarima B. Putaway manda la etiqueta de B a un espacio con producto de A, el replen saca el lote equivocado y el siguiente conteo marca las dos. Corrígelo con Edit antes de que la tarima salga del muelle."],
+  ["Edit → scan the LPN → lower the quantity → Save unreceives just those units. Tapping the X on a SKU tile unreceives that SKU completely. The LPN itself stays.",
+   "Edit → escanea el LPN → baja la cantidad → Save des-recibe solo esas unidades. Tocar la X en la tarjeta de un SKU des-recibe ese SKU completo. El LPN se queda."],
+  ["Break out = scan only the units you need. Full LPN = the whole container moves. If you need 5 of 40, Break out leaves 35 on the LPN in overstock.",
+   "Break out = escaneas solo las unidades que necesitas. Full LPN = se mueve todo el contenedor. Si necesitas 5 de 40, Break out deja 35 en el LPN en el sobre-inventario."],
+  ["The LPN scan is how ShipHero knows the 4 units came from LPN-BO210 and not the LPN next to it. The next replen and count then see the right quantity on each.",
+   "El escaneo del LPN es como ShipHero sabe que las 4 unidades salieron del LPN-BO210 y no del LPN de al lado. Así el siguiente replen y conteo ven la cantidad correcta en cada uno."],
+  ["Scan the pallet LPN, then each box LPN on it and the units inside each box, finishing each LPN. A box you skip shows up as a discrepancy when the count closes.",
+   "Escanea el LPN de la tarima, luego cada LPN de caja y las unidades de cada caja, terminando cada LPN. Una caja que te saltes aparece como discrepancia al cerrar el conteo."],
+  ["Each LPN's lot and expiry show in the LPN Viewer and on location screens. Replen and picking use that to suggest the LPN with the earliest expiry first.",
+   "El lote y la caducidad de cada LPN aparecen en LPN Viewer y en las pantallas de ubicación. El replen y el surtido usan eso para sugerir primero el LPN con la caducidad más próxima."],
+  ["After Complete receiving, the pallets sit at the dock door location in ShipHero. They only show up in storage once someone scans them in Putaway (or moves them with a transfer).",
+   "Después de Complete receiving, las tarimas siguen en la ubicación de la puerta del muelle en ShipHero. Solo aparecen en almacenaje cuando alguien las escanea en Putaway (o las mueve con una transferencia)."],
+  ["From = an LPN moves just that container. From = a location moves everything in it, loose stock and LPNs. Make sure you scanned the one you meant before tapping Confirm.",
+   "From = un LPN mueve solo ese contenedor. From = una ubicación mueve todo lo que tiene, suelto y LPNs. Asegúrate de haber escaneado lo correcto antes de tocar Confirm."],
+  // pool 2 - necessary
+  ["After the LPN scan, a green confirmation shows the LPN number, SKU and quantity. If it doesn't appear, the units weren't received onto that LPN.",
+   "Después del escaneo del LPN, una confirmación verde muestra el número de LPN, el SKU y la cantidad. Si no aparece, las unidades no se recibieron en ese LPN."],
+  ["Complete receiving closes your part only. Others on the same inbound keep receiving in their My Work, and the inbound is finalized once everyone is done.",
+   "Complete receiving cierra solo tu parte. Los demás en el mismo inbound siguen recibiendo en su My Work, y el inbound se finaliza cuando todos terminan."],
+  ["Each person scans their own box LPNs, then scans the same pallet LPN to nest them. Scanning that pallet again later adds more boxes to it.",
+   "Cada persona escanea sus propios LPNs de caja y luego escanea el mismo LPN de tarima para anidarlos. Escanear esa tarima otra vez después le agrega más cajas."],
+  ["Your Loose Cartons queue is yours alone. Scan a pallet LPN to nest your queue before starting the next pallet - you can't palletize someone else's boxes.",
+   "Tu fila de Loose Cartons es solo tuya. Escanea un LPN de tarima para anidar tu fila antes de empezar la siguiente tarima; no puedes paletizar las cajas de otra persona."],
+  ["When the count closes, a not-found LPN moves to the warehouse's missing-LPN location. Its stock can't be allocated until it's found and moved back.",
+   "Al cerrar el conteo, un LPN no encontrado se mueve a la ubicación de LPNs perdidos del almacén. Su inventario no se puede asignar hasta que aparezca y se regrese."],
+  ["An unexpected LPN gets an Unexpected tag in the count and is moved to the location where you found it when the count closes.",
+   "Un LPN inesperado recibe la etiqueta Unexpected en el conteo y se mueve a la ubicación donde lo encontraste al cerrar el conteo."],
+  ["Locations in an active count are non-pickable, so pickers aren't sent there. An unfinished count keeps them locked, which is why counts are created right before they're done.",
+   "Las ubicaciones en un conteo activo no se pueden surtir, así que no mandan surtidores ahí. Un conteo sin terminar las mantiene bloqueadas; por eso los conteos se crean justo antes de hacerlos."],
+  ["Item Locations (web) has Loose Units and Units in LPN columns, plus lot and expiry, and it can be exported to CSV.",
+   "Item Locations (web) tiene columnas Loose Units y Units in LPN, además de lote y caducidad, y se puede exportar a CSV."],
+  ["Inventory → Transfer Entire Location → From = scan the box LPN → To = scan the pallet LPN → Confirm. You can also nest in Putaway: Full LPN → scan the destination LPN.",
+   "Inventory → Transfer Entire Location → From = escanea el LPN de caja → To = escanea el LPN de tarima → Confirm. También puedes anidar en Putaway: Full LPN → escanea el LPN destino."],
+  ["Rejecting: tap the Rejected counter, scan the item, enter quantity + reason (+ photo), then scan the reject LPN. Those units are recorded but kept out of available stock.",
+   "Para rechazar: toca el contador Rejected, escanea el artículo, captura cantidad + motivo (+ foto) y escanea el LPN de rechazo. Esas unidades quedan registradas pero fuera del inventario disponible."],
+  // pool 2 - basic
+  ["Printing makes an LPN Unused. Receiving stock onto it makes it In-Use. When the last unit comes off it becomes Used. Nobody sets these by hand.",
+   "Al imprimirlo, un LPN queda Unused. Al recibir inventario en él, pasa a In-Use. Cuando sale la última unidad, queda Used. Nadie cambia estos estados a mano."],
+  ["Boxes nest onto pallets, never the other way around. A pallet is always the top level, so it can't go inside a box or another pallet.",
+   "Las cajas se anidan sobre tarimas, nunca al revés. La tarima siempre es el nivel superior, así que no puede ir dentro de una caja ni de otra tarima."],
+  ["Box LPNs (LPN-BO…) are for cases or cartons; pallet LPNs (LPN-PA…) are for the whole pallet. Boxes can be nested on a pallet.",
+   "Los LPNs de caja (LPN-BO…) son para cajas o cartones; los de tarima (LPN-PA…) son para toda la tarima. Las cajas se pueden anidar sobre una tarima."],
+  ["Unused means nothing has ever been on it. As soon as stock is received onto it, it shows In-Use.",
+   "Unused significa que nunca ha tenido nada. En cuanto se recibe inventario en él, aparece como In-Use."],
+  ["ShipHero creates LPN numbers in sequence, so each label is a one-of-a-kind ID. That's why a copied or reused label causes trouble.",
+   "ShipHero crea los números de LPN en secuencia, así que cada etiqueta es un ID único. Por eso una etiqueta copiada o reutilizada causa problemas."]
+];
+if (DETAILS.length !== Q.length) console.warn('DETAILS/Q length mismatch', DETAILS.length, Q.length);
+Q.forEach((q,n)=>{ if(DETAILS[n]){ q.d=DETAILS[n][0]; q.ds=DETAILS[n][1]; } });
+const dText = c => lang==='es' ? c.ds : c.d;
+
 
 
 // ---------- helpers ----------
@@ -616,7 +688,7 @@ function renderResults(){
   $('rTable').innerHTML = secs.map(x=>`<tr><td><span class="tier ${x.t}">${tierLabel(x.t)}</span></td><td>${x.ok} / ${x.n}</td></tr>`).join('');
   $('rMissTitle').textContent = misses.length ? L().reviewN(misses.length) : L().reviewNone;
   const esc = s => s.replace(/[&<>"]/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
-  $('rMiss').innerHTML = misses.map(r=>`<div class="miss"><span class="tier ${r.c.t}">${tierLabel(r.c.t)}</span> <span class="topic">${esc(topic(r.c))}</span><div style="margin:6px 0">"${esc(qText(r.c))}"</div><b>${r.c.a?L().itsRight:L().itsWrong}</b> ${esc(wText(r.c))}${info(r.c)?`<div class="ctx"><span class="lbl">${PRIMER[lang].ctxLabel}</span>${esc(info(r.c).ctx)}<span class="lbl">${PRIMER[lang].whereLabel}</span>${esc(info(r.c).where)}</div>`:''}</div>`).join('');
+  $('rMiss').innerHTML = misses.map(r=>`<div class="miss"><span class="tier ${r.c.t}">${tierLabel(r.c.t)}</span> <span class="topic">${esc(topic(r.c))}</span><div style="margin:6px 0">"${esc(qText(r.c))}"</div><b>${r.c.a?L().itsRight:L().itsWrong}</b> ${esc(wText(r.c))}${dText(r.c)?`<div class="ctx"><span class="lbl">${PRIMER[lang].detLabel}</span>${esc(dText(r.c))}</div>`:''}</div>`).join('');
   $('rStudyMiss').style.display = misses.length ? 'inline-block':'none';
   $('rCert').style.display = pass ? 'inline-block':'none';
   lockUI();
@@ -667,7 +739,7 @@ function sRender(){
   $('sQ').textContent=qText(c); $('sLabel').textContent=lpn(si+1);
   $('sAns').className='verdict '+(c.a?'ok':'no'); $('sAns').textContent = c.a ? L().ansRight : L().ansWrong;
   $('sWhy').textContent=wText(c);
-  const I=info(c), P=PRIMER[lang]; $('sCtx').innerHTML = I ? `<span class="lbl">${P.ctxLabel} · ${topic(c)}</span>${I.ctx}<span class="lbl">${P.whereLabel}</span>${I.where}` : ''; $('sCount').textContent=`${si+1} / ${sDeck.length}`; lockUI();
+  const P=PRIMER[lang]; $('sCtx').innerHTML = dText(c) ? `<span class="lbl">${P.detLabel}</span>${dText(c)}` : ''; $('sFlip').textContent = P.flipHint; $('sCount').textContent=`${si+1} / ${sDeck.length}`; lockUI();
 }
 
 // ---------- confetti ----------
