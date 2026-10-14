@@ -87,6 +87,18 @@
     .cert h1{font-size:40px;margin:0 0 10px} .cert .nm{font-size:34px;font-weight:bold;margin:20px 0;border-bottom:2px solid #000;display:inline-block;padding:0 30px}
   }
 
+  .primer{background:#0f172a;border:1px solid #2b3a52;border-radius:16px;padding:6px 16px;margin:0 0 16px}
+  .primer summary{cursor:pointer;font-weight:800;font-size:17px;padding:10px 0;list-style:none}
+  .primer summary::-webkit-details-marker{display:none}
+  .primer summary:after{content:" ▾";color:var(--accent)} .primer[open] summary:after{content:" ▴"}
+  .primer ol{margin:4px 0 8px;padding-left:22px} .primer li{margin:8px 0;line-height:1.45}
+  .primer li b{color:var(--accent)}
+  .primer .rule{background:rgba(45,212,191,.1);border-left:4px solid var(--accent);border-radius:8px;padding:10px 12px;margin:8px 0 12px;font-weight:600}
+  #sCard{min-height:420px}
+  #sCard .face.back{justify-content:flex-start;overflow-y:auto}
+  .ctx{margin-top:14px;padding-top:12px;border-top:1px solid #2b3a52;font-size:15.5px;line-height:1.5;color:#cbd5e1}
+  .ctx .lbl{display:block;font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--accent);margin:8px 0 2px}
+  .miss .ctx{font-size:14px;margin-top:8px;padding-top:8px}
   .lang{display:flex;align-items:center;gap:8px;justify-content:flex-end;margin:-6px 0 10px}
   .lang button{border:1px solid var(--panel2);background:transparent;color:var(--ink);border-radius:999px;padding:6px 14px;font-weight:700;cursor:pointer;font-size:14px}
   .lang button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
@@ -139,18 +151,18 @@
     <div class="panel">
       <h2 data-i18n="studyTitle"></h2>
       <p class="muted" data-i18n="studyHint"></p>
+      <details class="primer" id="primer" open><summary id="primerTitle"></summary><ol id="primerList"></ol><div class="rule" id="primerRule"></div></details>
       <div class="filters" id="filters"></div>
       <div class="scene"><div class="card" id="sCard">
         <div class="face front"><div class="label" id="sLabel"></div><div><span class="tier" id="sTier"></span><span class="topic" id="sTopic"></span></div><div class="q" id="sQ" style="margin-top:14px"></div></div>
-        <div class="face back"><div class="verdict" id="sAns"></div><div class="why" id="sWhy"></div></div>
+        <div class="face back"><div class="verdict" id="sAns"></div><div class="why" id="sWhy"></div><div class="ctx" id="sCtx"></div></div>
       </div></div>
-      <div class="row" style="justify-content:space-between">
+      <div class="row" style="justify-content:space-between;align-items:center">
         <button class="btn ghost" id="sPrev" data-i18n="prev"></button>
         <span class="chip" id="sCount"></span>
-      </div>
-      <div class="row" style="justify-content:center;margin-top:10px"><span class="chip" id="sProg" style="display:none"></span>
         <button class="btn ghost" id="sNext" data-i18n="next"></button>
       </div>
+      <div class="row" style="justify-content:center;margin-top:10px"><span class="chip" id="sProg" style="display:none"></span></div>
       <div class="row" style="margin-top:16px">
         <button class="btn" id="studyToQuiz" data-i18n="studyToQuiz"></button>
         <button class="btn ghost" id="studyHome" data-i18n="home"></button>
@@ -211,7 +223,7 @@
 <footer><span data-i18n="footer"></span> <span id="ver"></span></footer>
 
 <script>
-const VERSION = 'v1.0 · Oct 14, 2026';
+const VERSION = 'v1.1 · Oct 14, 2026';
 const PASS = 40, TOTAL = 50, PER_Q = 2, CRIT_MIN = 8;
 const DRAW = {critical:10, necessary:10, basic:5};   // cards drawn per attempt from the pool
 
@@ -284,7 +296,7 @@ const T = {
     leave:"Tu quiz aún no termina.", locale:"es-MX"
   }
 };
-const TOPICS_ES = {"Receiving":"Recepción","LPN basics":"Básicos de LPN","Putaway":"Putaway (acomodo)","Replen":"Replen (reabasto)","Picking":"Surtido","Cycle count":"Conteo cíclico","Downstream":"Otros flujos","Nesting":"Anidado","Unpacking":"Desempacar","Labels":"Etiquetas","Corrections":"Correcciones","Lookups":"Consultas"};
+const TOPICS_ES = {"Receiving":"Recepción","LPN basics":"Básicos de LPN","Putaway":"Putaway (acomodo)","Replen":"Replen (reabasto)","Picking":"Surtido","Cycle count":"Conteo cíclico","Downstream":"Otros flujos","Nesting":"Anidado","Unpacking":"Desempacar","Labels":"Etiquetas","Corrections":"Correcciones","Lookups":"Consultas","Moves":"Movimientos"};
 
 // a: true = the statement is RIGHT, false = WRONG
 const Q = [
@@ -445,6 +457,72 @@ const Q = [
    q:"Every LPN number is unique - no two containers share one.", w:"That's what lets ShipHero track each container on its own.",
    qs:"Cada número de LPN es único: no hay dos contenedores con el mismo.", ws:"Eso es lo que permite a ShipHero rastrear cada contenedor por separado."}
 ];
+// ===== Study context (topic blurbs + primer) =====
+const TOPIC_INFO = {
+  "Receiving": {
+    en:{ctx:"Receiving is where every LPN's story starts. Whatever gets scanned onto an LPN here - SKU, quantity, lot, expiry - is what putaway, replen, picking and counts will trust later.", where:"iPad → Receiving → Inbound → open the inbound"},
+    es:{ctx:"La recepción es donde empieza la historia de cada LPN. Lo que se escanea aquí en un LPN (SKU, cantidad, lote, caducidad) es lo que putaway, replen, surtido y conteos van a usar después.", where:"iPad → Receiving → Inbound → abrir el inbound"}},
+  "LPN basics": {
+    en:{ctx:"An LPN is a license plate for a container. The container can move anywhere in the building - the LPN and everything recorded on it go with it.", where:"Web: Inventory & Locations → LPNs · iPad: Inventory → LPN Viewer"},
+    es:{ctx:"Un LPN es una placa para un contenedor. El contenedor puede moverse a cualquier parte del almacén y el LPN, con todo lo registrado, va con él.", where:"Web: Inventory & Locations → LPNs · iPad: Inventory → LPN Viewer"}},
+  "Labels": {
+    en:{ctx:"LPN labels are made ahead of time on the web app and brought to the dock. The barcode is what everyone scans later, so it has to stay readable and on the right container.", where:"Web: Inventory & Locations → LPNs → Create LPN"},
+    es:{ctx:"Las etiquetas LPN se hacen con anticipación en la app web y se llevan al muelle. Todos van a escanear ese código después, así que debe quedar legible y en el contenedor correcto.", where:"Web: Inventory & Locations → LPNs → Create LPN"}},
+  "Nesting": {
+    en:{ctx:"Nesting puts box LPNs on a pallet LPN so they travel together. One scan of the pallet then moves, counts or puts away everything on it.", where:"Receiving: Received Summary → Palletize Cartons · Later: Inventory → Transfer Entire Location"},
+    es:{ctx:"Anidar pone LPNs de caja sobre un LPN de tarima para que viajen juntos. Un escaneo de la tarima mueve, cuenta o acomoda todo lo que tiene.", where:"Recepción: Received Summary → Palletize Cartons · Después: Inventory → Transfer Entire Location"}},
+  "Putaway": {
+    en:{ctx:"Putaway takes received pallets from the dock to where they'll live. With LPNs you scan the container, then choose to move all of it (Full LPN) or part of it (Some Items).", where:"iPad → Products → Putaway"},
+    es:{ctx:"Putaway lleva las tarimas recibidas del muelle a su lugar. Con LPNs escaneas el contenedor y eliges mover todo (Full LPN) o una parte (Some Items).", where:"iPad → Products → Putaway"}},
+  "Unpacking": {
+    en:{ctx:"Unpacking pulls some units out of an LPN. The units land loose where you put them; the LPN keeps the rest, along with its label and history.", where:"Putaway → Some Items · Replen → Break out LPN · Inventory → Search by Location"},
+    es:{ctx:"Desempacar saca algunas unidades de un LPN. Las unidades quedan sueltas donde las pongas; el LPN se queda con el resto, su etiqueta e historial.", where:"Putaway → Some Items · Replen → Break out LPN · Inventory → Search by Location"}},
+  "Replen": {
+    en:{ctx:"Replen refills pick locations from overstock. When the overstock is on LPNs, ShipHero points you to the right one by expiry (FEFO), and you either move the whole LPN or break out just what's needed.", where:"iPad → Replenishment (new)"},
+    es:{ctx:"El replen rellena las ubicaciones de surtido desde el sobre-inventario. Cuando está en LPNs, ShipHero te indica el correcto por caducidad (FEFO) y mueves el LPN completo o sacas solo lo necesario.", where:"iPad → Replenishment (new)"}},
+  "Picking": {
+    en:{ctx:"Picking still follows FEFO. When the stock you're sent to is on an LPN, the extra LPN scan tells ShipHero which container you took from, so that LPN's quantity stays right.", where:"iPad / handheld → picking (MIB) as today"},
+    es:{ctx:"El surtido sigue FEFO. Cuando el inventario está en un LPN, el escaneo extra le dice a ShipHero de qué contenedor tomaste, para que la cantidad de ese LPN siga correcta.", where:"iPad / handheld → surtido (MIB) como hoy"}},
+  "Cycle count": {
+    en:{ctx:"Cycle counts check that the system matches the shelf. With LPNs you count container by container - scan the LPN, count what's inside - so mistakes show up on the exact LPN.", where:"iPad → Inventory → Cycle Count"},
+    es:{ctx:"Los conteos cíclicos revisan que el sistema coincida con el rack. Con LPNs cuentas contenedor por contenedor (escanea el LPN, cuenta lo de adentro) y así los errores aparecen en el LPN exacto.", where:"iPad → Inventory → Cycle Count"}},
+  "Downstream": {
+    en:{ctx:"Every flow after receiving trusts what ShipHero thinks is on each LPN and where it is. If the system and the floor disagree, picks, replen and counts all go wrong together.", where:"Golden rule: if it moves physically, scan the move in ShipHero"},
+    es:{ctx:"Cada flujo después de la recepción confía en lo que ShipHero cree que hay en cada LPN y dónde está. Si el sistema y el piso no coinciden, el surtido, el replen y los conteos fallan juntos.", where:"Regla de oro: si se mueve físicamente, escanea el movimiento en ShipHero"}},
+  "Moves": {
+    en:{ctx:"Moves keep ShipHero in sync with the floor. Scanning an LPN moves just that container; scanning a location moves everything in it.", where:"iPad → Inventory → Transfer Entire Location"},
+    es:{ctx:"Los movimientos mantienen a ShipHero al día con el piso. Escanear un LPN mueve solo ese contenedor; escanear una ubicación mueve todo lo que tiene.", where:"iPad → Inventory → Transfer Entire Location"}},
+  "Corrections": {
+    en:{ctx:"Mistakes at receiving get fixed on the iPad, where ShipHero knows which LPN holds what. Fixing it early stops the wrong data from spreading downstream.", where:"iPad → Received Summary → Edit → scan the LPN"},
+    es:{ctx:"Los errores de recepción se corrigen en el iPad, donde ShipHero sabe qué LPN tiene qué. Corregir temprano evita que el dato equivocado se pase a los otros flujos.", where:"iPad → Received Summary → Edit → escanear el LPN"}},
+  "Lookups": {
+    en:{ctx:"When you're not sure what's on a container or where it went, look it up instead of guessing.", where:"iPad: Inventory → LPN Viewer · Web: LPNs page, Item Locations report"},
+    es:{ctx:"Cuando no estés seguro de qué tiene un contenedor o a dónde fue, búscalo en lugar de adivinar.", where:"iPad: Inventory → LPN Viewer · Web: página LPNs, reporte Item Locations"}}
+};
+const PRIMER = {
+  en:{title:"📘 How LPNs flow through the warehouse", steps:[
+    ["Print labels","LPN labels are printed on the web app before the truck arrives."],
+    ["Arrive","Open the inbound on the iPad and scan the dock door - the truck is marked Arrived. Nothing is received yet."],
+    ["Receive","Scan a unit (lot + expiry if asked), enter the quantity, then scan the LPN. The LPN scan is the receipt. Identical pallets: Duplicate. Boxes on a pallet: nest them."],
+    ["Put away","Scan the LPN and move it from the dock - the whole container (Full LPN) or just part of it (Some Items)."],
+    ["Replen","Refill pick locations from LPNs. ShipHero suggests the right LPN by expiry; move the full LPN or break out what's needed."],
+    ["Pick","Picking follows FEFO. If the stock is on an LPN, scan the location and the LPN, so that LPN's quantity goes down."],
+    ["Count","Cycle counts go container by container: scan the LPN, count what's inside, finish the LPN."]],
+    rule:"Golden rule: if something moves on the floor, the move gets scanned in ShipHero. Otherwise every flow after it is working off the wrong information.",
+    ctxLabel:"Context", whereLabel:"Where you'll see it", whyLabel:"Why"},
+  es:{title:"📘 Cómo fluyen los LPNs en el almacén", steps:[
+    ["Imprimir etiquetas","Las etiquetas LPN se imprimen en la app web antes de que llegue el camión."],
+    ["Llegada","Abre el inbound en el iPad y escanea la puerta del muelle: el camión queda como Arrived. Todavía no se recibe nada."],
+    ["Recibir","Escanea una unidad (lote + caducidad si lo pide), captura la cantidad y escanea el LPN. El escaneo del LPN es la recepción. Tarimas idénticas: Duplicate. Cajas sobre una tarima: anídalas."],
+    ["Acomodar","Escanea el LPN y muévelo del muelle: el contenedor completo (Full LPN) o solo una parte (Some Items)."],
+    ["Replen","Rellena las ubicaciones de surtido desde los LPNs. ShipHero sugiere el LPN correcto por caducidad; mueve el LPN completo o saca lo necesario."],
+    ["Surtir","El surtido sigue FEFO. Si el inventario está en un LPN, escanea la ubicación y el LPN para que baje la cantidad de ese LPN."],
+    ["Contar","Los conteos cíclicos van contenedor por contenedor: escanea el LPN, cuenta lo de adentro y termina el LPN."]],
+    rule:"Regla de oro: si algo se mueve en el piso, el movimiento se escanea en ShipHero. Si no, todos los flujos siguientes trabajan con información equivocada.",
+    ctxLabel:"Contexto", whereLabel:"Dónde lo verás", whyLabel:"Por qué"}
+};
+const info = c => (TOPIC_INFO[c.k]||{})[lang];
+
 
 // ---------- helpers ----------
 const $ = id => document.getElementById(id);
@@ -462,7 +540,13 @@ const lpn = n => (n%3===0?'LPN-PA':'LPN-BO') + (100+n);
 const fullName = () => `${$('first').value.trim()} ${$('last').value.trim()}`;
 
 // ---------- language ----------
+function renderPrimer(){
+  const P=PRIMER[lang]; $('primerTitle').textContent=P.title;
+  $('primerList').innerHTML=P.steps.map(([h,b])=>`<li><b>${h}</b> - ${b}</li>`).join('');
+  $('primerRule').textContent=P.rule;
+}
 function applyLang(){
+  renderPrimer();
   document.documentElement.lang = lang;
   document.querySelectorAll('[data-i18n]').forEach(el=>{ const v=L()[el.dataset.i18n]; if(typeof v==='string') el.textContent=v; });
   document.querySelectorAll('[data-i18n-html]').forEach(el=>{ el.innerHTML=L()[el.dataset.i18nHtml]; });
@@ -532,7 +616,7 @@ function renderResults(){
   $('rTable').innerHTML = secs.map(x=>`<tr><td><span class="tier ${x.t}">${tierLabel(x.t)}</span></td><td>${x.ok} / ${x.n}</td></tr>`).join('');
   $('rMissTitle').textContent = misses.length ? L().reviewN(misses.length) : L().reviewNone;
   const esc = s => s.replace(/[&<>"]/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
-  $('rMiss').innerHTML = misses.map(r=>`<div class="miss"><span class="tier ${r.c.t}">${tierLabel(r.c.t)}</span> <span class="topic">${esc(topic(r.c))}</span><div style="margin:6px 0">"${esc(qText(r.c))}"</div><b>${r.c.a?L().itsRight:L().itsWrong}</b> ${esc(wText(r.c))}</div>`).join('');
+  $('rMiss').innerHTML = misses.map(r=>`<div class="miss"><span class="tier ${r.c.t}">${tierLabel(r.c.t)}</span> <span class="topic">${esc(topic(r.c))}</span><div style="margin:6px 0">"${esc(qText(r.c))}"</div><b>${r.c.a?L().itsRight:L().itsWrong}</b> ${esc(wText(r.c))}${info(r.c)?`<div class="ctx"><span class="lbl">${PRIMER[lang].ctxLabel}</span>${esc(info(r.c).ctx)}<span class="lbl">${PRIMER[lang].whereLabel}</span>${esc(info(r.c).where)}</div>`:''}</div>`).join('');
   $('rStudyMiss').style.display = misses.length ? 'inline-block':'none';
   $('rCert').style.display = pass ? 'inline-block':'none';
   lockUI();
@@ -564,6 +648,7 @@ let sDeck=[], si=0, sFilter='all', sHasMissed=false;
 function startStudy(cards){
   sHasMissed = !!(cards && cards.length);
   sDeck = sHasMissed ? cards : Q.slice(); si=0; sFilter = sHasMissed ? 'missed' : 'all';
+  $('primer').open = !sHasMissed;
   buildFilters(sHasMissed); show('study'); sRender();
 }
 function buildFilters(hasMissed){
@@ -581,7 +666,8 @@ function sRender(){
   $('sTier').className='tier '+c.t; $('sTier').textContent=tierLabel(c.t); $('sTopic').textContent=topic(c);
   $('sQ').textContent=qText(c); $('sLabel').textContent=lpn(si+1);
   $('sAns').className='verdict '+(c.a?'ok':'no'); $('sAns').textContent = c.a ? L().ansRight : L().ansWrong;
-  $('sWhy').textContent=wText(c); $('sCount').textContent=`${si+1} / ${sDeck.length}`; lockUI();
+  $('sWhy').textContent=wText(c);
+  const I=info(c), P=PRIMER[lang]; $('sCtx').innerHTML = I ? `<span class="lbl">${P.ctxLabel} · ${topic(c)}</span>${I.ctx}<span class="lbl">${P.whereLabel}</span>${I.where}` : ''; $('sCount').textContent=`${si+1} / ${sDeck.length}`; lockUI();
 }
 
 // ---------- confetti ----------
