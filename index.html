@@ -147,6 +147,8 @@
       <div class="row" style="justify-content:space-between">
         <button class="btn ghost" id="sPrev" data-i18n="prev"></button>
         <span class="chip" id="sCount"></span>
+      </div>
+      <div class="row" style="justify-content:center;margin-top:10px"><span class="chip" id="sProg" style="display:none"></span>
         <button class="btn ghost" id="sNext" data-i18n="next"></button>
       </div>
       <div class="row" style="margin-top:16px">
@@ -189,7 +191,7 @@
         <button class="btn ghost" id="rStudyMiss" data-i18n="studyMiss"></button>
         <button class="btn ghost" id="rCert" style="display:none" data-i18n="printCert"></button>
       </div>
-      <p id="rSend" class="chip" style="display:inline-block;margin:6px 0"></p>
+      <p id="rLock" class="chip" style="display:none;margin:6px 0"></p>
       <h3 id="rMissTitle"></h3>
       <div id="rMiss"></div>
     </div>
@@ -206,19 +208,11 @@
   <p style="margin-top:40px" data-i18n="certSign"></p>
 </div>
 
-<footer data-i18n="footer"></footer>
+<footer><span data-i18n="footer"></span> <span id="ver"></span></footer>
 
 <script>
-// ===== Score recording: Google Form (fill in after creating the form) =====
-// formResponse URL + entry IDs from the form's "Get pre-filled link".
-const FORM = {
-  url: "",            // e.g. https://docs.google.com/forms/d/e/XXXX/formResponse
-  entries: {
-    first: "", last: "", score: "", result: "", sections: "", missed: "", duration: ""
-  }
-};
-
-const PASS = 40, TOTAL = 50, PER_Q = 2;
+const VERSION = 'v1.0 · Oct 14, 2026';
+const PASS = 40, TOTAL = 50, PER_Q = 2, CRIT_MIN = 8;
 const DRAW = {critical:10, necessary:10, basic:5};   // cards drawn per attempt from the pool
 
 // ===== UI text =====
@@ -229,7 +223,7 @@ const T = {
     intro:"Mobile Receiving + LPNs are coming to DISH. This is a quick, no-stress run through how receiving with LPNs works and what it changes downstream - putaway, replen, picking and cycle counts.",
     how:"Every card is a statement. Tap <b>✅ Right</b> or <b>❌ Wrong</b>. After each answer the card flips and tells you why. You have to answer every card - no skipping, no going back.",
     ruleCards:"cards", ruleMarks:"marks total", rulePass:"marks to pass",
-    sentNote:"Your score is sent to the DISH training team when you finish.",
+    sentNote:"To pass you need 40 marks AND at least 8 of the 10 critical cards right.",
     first:"First name *", last:"Last name *", nameErr:"Enter your first and last name to start.",
     goQuiz:"🚛 Start the shift (quiz)", goStudy:"🗂️ Study flashcards first",
     best:n=>`🏆 Your best on this device: ${n} / ${TOTAL}`,
@@ -246,11 +240,10 @@ const T = {
     passMsgClean:p=>`You needed ${p}. Clean sweep on the critical cards - you're dock-ready. 💪`,
     failMsg:(p,d)=>`You needed ${p} - you were ${d} short. Study the cards below and run it again. It reshuffles every time.`,
     thSection:"Section", thCorrect:"Correct",
+    failCrit:c=>`You have the marks, but only ${c}/10 critical cards right - you need at least ${CRIT_MIN}/10 critical to pass. Review the critical cards below and run it again.`,
+    lockMsg:"🔒 Flip through every card you missed to unlock a retake.", lockBtn:"🔒 Retake locked", unlocked:"🔓 Retake unlocked - good luck!", reviewProg:(a,b)=>`Reviewed ${a} / ${b}`,
     retry:"🔁 Run the shift again", studyMiss:"🗂️ Study what I missed", printCert:"🖨️ Print certificate",
     reviewN:n=>`Cards to review (${n})`, reviewNone:"Nothing to review - perfect run!",
-    sendOff:"⚠️ Score recording not set up yet - show this screen to your lead.",
-    sending:"📤 Sending your score...", sent:"✅ Score sent to the DISH training team",
-    sendFail:"❌ Couldn't send - check wifi and", retryLink:"tap to retry",
     certThis:"This certifies that", certPassed:"passed Mobile Receiving + LPNs with a score of",
     certSign:"Lead / Supervisor sign-off: ____________________________",
     footer:"DISH Dock Academy · ShipHero Mobile Receiving + LPNs · Training aid only - your lead and the DISH SOP have the final word.",
@@ -263,7 +256,7 @@ const T = {
     intro:"La recepción móvil + LPNs llega a DISH. Este es un repaso rápido y sin estrés de cómo funciona la recepción con LPNs y qué cambia en los demás flujos: putaway (acomodo), replen (reabastecimiento), surtido y conteos cíclicos.",
     how:"Cada tarjeta es una afirmación. Toca <b>✅ Correcto</b> o <b>❌ Incorrecto</b>. Después de cada respuesta la tarjeta se voltea y te explica por qué. Tienes que contestar todas: no se pueden saltar ni regresar.",
     ruleCards:"tarjetas", ruleMarks:"puntos en total", rulePass:"puntos para aprobar",
-    sentNote:"Tu puntaje se envía al equipo de capacitación de DISH al terminar.",
+    sentNote:"Para aprobar necesitas 40 puntos Y al menos 8 de las 10 tarjetas críticas correctas.",
     first:"Nombre *", last:"Apellido *", nameErr:"Escribe tu nombre y apellido para empezar.",
     goQuiz:"🚛 Empezar el turno (quiz)", goStudy:"🗂️ Estudiar las tarjetas primero",
     best:n=>`🏆 Tu mejor puntaje en este dispositivo: ${n} / ${TOTAL}`,
@@ -280,11 +273,10 @@ const T = {
     passMsgClean:p=>`Necesitabas ${p}. Todas las tarjetas críticas correctas: estás listo para el muelle. 💪`,
     failMsg:(p,d)=>`Necesitabas ${p}; te faltaron ${d}. Repasa las tarjetas de abajo e inténtalo otra vez. Se revuelven cada vez.`,
     thSection:"Sección", thCorrect:"Correctas",
+    failCrit:c=>`Tienes los puntos, pero solo ${c}/10 tarjetas críticas correctas; necesitas al menos ${CRIT_MIN}/10 críticas para aprobar. Repasa las tarjetas críticas de abajo e inténtalo otra vez.`,
+    lockMsg:"🔒 Voltea todas las tarjetas que fallaste para desbloquear otro intento.", lockBtn:"🔒 Intento bloqueado", unlocked:"🔓 Intento desbloqueado - ¡suerte!", reviewProg:(a,b)=>`Repasadas ${a} / ${b}`,
     retry:"🔁 Repetir el turno", studyMiss:"🗂️ Estudiar mis errores", printCert:"🖨️ Imprimir certificado",
     reviewN:n=>`Tarjetas para repasar (${n})`, reviewNone:"Nada que repasar - ¡perfecto!",
-    sendOff:"⚠️ El registro de puntajes aún no está configurado: muéstrale esta pantalla a tu líder.",
-    sending:"📤 Enviando tu puntaje...", sent:"✅ Puntaje enviado al equipo de capacitación de DISH",
-    sendFail:"❌ No se pudo enviar - revisa el wifi y", retryLink:"toca para reintentar",
     certThis:"Se certifica que", certPassed:"aprobó Recepción Móvil + LPNs con un puntaje de",
     certSign:"Firma del líder / supervisor: ____________________________",
     footer:"DISH Dock Academy · Recepción móvil ShipHero + LPNs · Solo material de apoyo: tu líder y el SOP de DISH tienen la última palabra.",
@@ -483,6 +475,7 @@ document.querySelectorAll('.lang button').forEach(b=>b.onclick=()=>{ lang=b.data
 
 // ---------- quiz ----------
 function startQuiz(){
+  if(reviewLock){ startStudy(missCards()); return; }
   const f=$('first').value.trim(), l=$('last').value.trim();
   if(!f || !l){ show('start'); $('nameErr').style.display='block'; (f? $('last') : $('first')).focus(); return; }
   $('nameErr').style.display='none';
@@ -519,63 +512,51 @@ function next(){ if(!answered) return; i++; if(i>=deck.length) finish(); else re
 
 function finish(){
   inQuiz=false; show('results');
-  const pass = score>=PASS;
+  const critOk = results.filter(r=>r.ok && r.c.t==='critical').length;
+  const pass = score>=PASS && critOk>=CRIT_MIN;
   const prev = +store.get('dishLpnBest50')||0; if(score>prev) store.set('dishLpnBest50', score);
   const secs = ['critical','necessary','basic'].map(t=>{ const all=results.filter(r=>r.c.t===t); return {t, ok:all.filter(r=>r.ok).length, n:all.length}; });
   const misses = results.filter(r=>!r.ok).sort((a,b)=>(a.c.t==='critical'?0:1)-(b.c.t==='critical'?0:1));
-  lastFinish = {pass, secs, misses, date:new Date()};
+  lastFinish = {pass, secs, misses, critOk, date:new Date()};
+  reviewLock = !pass && misses.length>0; reviewed = new Set(); justUnlocked=false;
   renderResults();
-  sendScore();
   if(pass) confetti();
 }
 function renderResults(){
-  const {pass, secs, misses, date} = lastFinish;
+  const {pass, secs, misses, critOk, date} = lastFinish;
   $('rTitle').textContent = pass ? L().passTitle : L().failTitle;
   $('rScore').innerHTML = `<span class="${pass?'pass':'fail'}">${score}</span><span class="muted" style="font-size:28px"> / ${TOTAL}</span>`;
   $('rBar').style.width = (score/TOTAL*100)+'%'; $('rBar').style.background = pass ? 'var(--green)':'var(--red)';
   const missedCrit = misses.filter(r=>r.c.t==='critical').length;
-  $('rMsg').textContent = pass ? (missedCrit ? L().passMsgMiss(PASS, missedCrit) : L().passMsgClean(PASS)) : L().failMsg(PASS, PASS-score);
+  $('rMsg').textContent = pass ? (missedCrit ? L().passMsgMiss(PASS, missedCrit) : L().passMsgClean(PASS)) : (score>=PASS ? L().failCrit(critOk) : L().failMsg(PASS, PASS-score));
   $('rTable').innerHTML = secs.map(x=>`<tr><td><span class="tier ${x.t}">${tierLabel(x.t)}</span></td><td>${x.ok} / ${x.n}</td></tr>`).join('');
   $('rMissTitle').textContent = misses.length ? L().reviewN(misses.length) : L().reviewNone;
   const esc = s => s.replace(/[&<>"]/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
   $('rMiss').innerHTML = misses.map(r=>`<div class="miss"><span class="tier ${r.c.t}">${tierLabel(r.c.t)}</span> <span class="topic">${esc(topic(r.c))}</span><div style="margin:6px 0">"${esc(qText(r.c))}"</div><b>${r.c.a?L().itsRight:L().itsWrong}</b> ${esc(wText(r.c))}</div>`).join('');
   $('rStudyMiss').style.display = misses.length ? 'inline-block':'none';
   $('rCert').style.display = pass ? 'inline-block':'none';
+  lockUI();
   $('cName').textContent = fullName();
   $('cScore').textContent = `${score} / ${TOTAL}`;
   $('cDate').textContent = date.toLocaleDateString(L().locale,{year:'numeric',month:'long',day:'numeric'});
-  renderSend();
 }
 
-// ---------- score recording ----------
-let lastPayload=null, sendState='off';
-function sendScore(){
-  const {pass, secs, misses} = lastFinish;
-  const mins = Math.max(1, Math.round((Date.now()-startedAt)/60000));
-  lastPayload = {
-    first: $('first').value.trim(), last: $('last').value.trim(),
-    score: `${score}/${TOTAL}`, result: pass?'PASS':'FAIL',
-    sections: secs.map(x=>`${x.t} ${x.ok}/${x.n}`).join(', '),
-    missed: misses.map(r=>`[${r.c.t}] ${r.c.q}`).join(' | ') || 'none',
-    duration: `${mins} min · ${lang.toUpperCase()}`
-  };
-  postScore();
+// ---------- retake lock (fail -> review misses first) ----------
+let reviewLock=false, reviewed=new Set(), justUnlocked=false;
+const missCards = () => results.filter(r=>!r.ok).map(r=>r.c);
+function lockUI(){
+  $('rRetry').disabled = reviewLock; $('rRetry').textContent = reviewLock ? L().lockBtn : L().retry;
+  $('rLock').style.display = reviewLock ? 'inline-block':'none'; $('rLock').textContent = L().lockMsg;
+  $('studyToQuiz').disabled = reviewLock;
+  const showProg = sFilter==='missed' && (reviewLock || justUnlocked);
+  $('sProg').style.display = showProg ? 'inline-block':'none';
+  $('sProg').textContent = reviewLock ? L().reviewProg(reviewed.size, missCards().length) : L().unlocked;
 }
-function renderSend(){
-  const el=$('rSend');
-  if(sendState==='off') el.textContent=L().sendOff;
-  else if(sendState==='sending') el.textContent=L().sending;
-  else if(sendState==='sent') el.textContent=L().sent;
-  else { el.innerHTML=`${L().sendFail} <a href="#" id="resend" style="color:var(--accent)">${L().retryLink}</a>`; $('resend').onclick=e=>{e.preventDefault();postScore();}; }
-}
-function postScore(){
-  if(!FORM.url){ sendState='off'; renderSend(); return; }
-  sendState='sending'; renderSend();
-  const body=new URLSearchParams();
-  Object.entries(FORM.entries).forEach(([k,id])=>{ if(id) body.append(id, lastPayload[k]); });
-  fetch(FORM.url,{method:'POST',mode:'no-cors',body})
-    .then(()=>{ sendState='sent'; renderSend(); })
-    .catch(()=>{ sendState='fail'; renderSend(); });
+function markReviewed(c){
+  if(!reviewLock || sFilter!=='missed') return;
+  reviewed.add(c.q);
+  if(missCards().every(m=>reviewed.has(m.q))){ reviewLock=false; justUnlocked=true; }
+  lockUI();
 }
 
 // ---------- study ----------
@@ -600,7 +581,7 @@ function sRender(){
   $('sTier').className='tier '+c.t; $('sTier').textContent=tierLabel(c.t); $('sTopic').textContent=topic(c);
   $('sQ').textContent=qText(c); $('sLabel').textContent=lpn(si+1);
   $('sAns').className='verdict '+(c.a?'ok':'no'); $('sAns').textContent = c.a ? L().ansRight : L().ansWrong;
-  $('sWhy').textContent=wText(c); $('sCount').textContent=`${si+1} / ${sDeck.length}`;
+  $('sWhy').textContent=wText(c); $('sCount').textContent=`${si+1} / ${sDeck.length}`; lockUI();
 }
 
 // ---------- confetti ----------
@@ -617,7 +598,7 @@ $('goStudy').onclick=()=>startStudy(); $('studyHome').onclick=()=>show('start');
 $('rStudyMiss').onclick=()=>startStudy(results.filter(r=>!r.ok).map(r=>r.c));
 $('rCert').onclick=()=>window.print();
 $('bRight').onclick=()=>answer(true); $('bWrong').onclick=()=>answer(false); $('bNext').onclick=next;
-$('sCard').onclick=()=>$('sCard').classList.toggle('flipped');
+$('sCard').onclick=()=>{ $('sCard').classList.toggle('flipped'); if($('sCard').classList.contains('flipped')) markReviewed(sDeck[si]); };
 $('sNext').onclick=()=>{si=(si+1)%sDeck.length; sRender();}; $('sPrev').onclick=()=>{si=(si-1+sDeck.length)%sDeck.length; sRender();};
 ['first','last'].forEach(id=>$(id).addEventListener('input',()=>{ if($('first').value.trim()&&$('last').value.trim()) $('nameErr').style.display='none'; }));
 document.addEventListener('keydown',e=>{
@@ -626,6 +607,7 @@ document.addEventListener('keydown',e=>{
 });
 window.addEventListener('beforeunload',e=>{ if(inQuiz){ e.preventDefault(); e.returnValue=L().leave; } });
 applyLang();
+$('ver').textContent = '· ' + VERSION;
 
 </script>
 </body>
